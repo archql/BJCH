@@ -11,12 +11,14 @@ CONFIG += c++11
 SOURCES += \
     cell.cpp \
     controlmodel.cpp \
+    cordsystem.cpp \
     main.cpp \
     main.cpp
 
 HEADERS += \
     cell.h \
-    controlmodel.h
+    controlmodel.h \
+    cordsystem.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

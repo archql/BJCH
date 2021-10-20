@@ -5,6 +5,91 @@ ControlModel::ControlModel(QObject *parent)
 {
 }
 
+
+//======================================================
+void ControlModel::gen(int width,int height)
+{
+    cells_system.set(width, height);
+
+    beginResetModel();
+    // clear old cells
+    cells.clear();
+    // add new
+    int i, x, y;
+    for (i = 0; i < cells_system.maxLinear(); i++)
+    {
+        cells_system.toBilinear(i, x, y);
+        cells << new cell(x, y);
+    }
+
+    i = 0;
+    for (cell *c : qAsConst(cells))
+    {
+        // get billinear cords of the point
+        cells_system.toBilinear(i, x, y);
+
+        c->setNeibours(cells[cells_system.toLinear(x + 1, y)],
+                      cells[cells_system.toLinear(x    , y + 1)],
+                      cells[cells_system.toLinear(x - 1, y)],
+                      cells[cells_system.toLinear(x    , y - 1)]);
+
+        i++;
+    }
+
+    endResetModel();
+
+    emit ControlModel::mapReady();
+}
+
+void ControlModel::update(int x,int y, int radius, int force)
+{
+    int i = 0, curx, cury;
+//    for (cell *c : qAsConst(cells))
+//    {
+//        cells_system.toBilinear(i, curx, cury);
+//        // count noise
+//        double tmpn = sqrt((x - curx)*(x - curx) + (y - cury)*(y - cury));
+//        qInfo()<<tmpn;
+//        if (tmpn < radius)
+//            c->noise = force - 1*(tmpn*tmpn); // 5 is constant
+//        else
+//            c->noise = 0;
+//        // get clr
+//        c->color = c->getNoiseColor();
+
+//        i++;
+//    }
+      for (double a = 0; a < 6.28; a += 0.06)
+      {
+    //double a = 4.0;
+        raycast(x, y, sin(a), cos(a), force);
+      }
+    // temp
+
+    QModelIndex topLeft = createIndex(0,0);
+    QModelIndex bottomLeft = createIndex(cells_system.maxLinear(), 0);
+    emit dataChanged(topLeft, bottomLeft);
+}
+
+void ControlModel::raycast(double x, double y, double vx, double vy, double force)
+{
+    while (force > 1.) {
+        // add force
+        cell *c = cells[cells_system.toLinear(round(x), round(y))];
+        c->noise = sqrt((c->noise * c->noise) + (force*force));//+= force;
+        c->color = c->getNoiseColor();
+        // mov point
+        x += vx;
+        y += vy;
+        // dec force
+        force -= 3.; // temp value -6db ??
+    }
+
+}
+
+
+//========================================================
+
 int ControlModel::rowCount(const QModelIndex &parent) const
 {
     // For list models only the root node (an invalid parent) should return the list's size. For all
@@ -24,8 +109,10 @@ QVariant ControlModel::data(const QModelIndex &index, int role) const
     const cell *cur = cells.at(index.row());
     switch (role)
     {
-        case StartX_Role: return QVariant(cur->start_x);
-        case StartY_Role: return QVariant(cur->start_y);
+        case x_role: return QVariant(cur->x);
+        case y_role: return QVariant(cur->y);
+        case noise_role: return QVariant(cur->noise);
+        case color_role: return QVariant(cur->color);
     }
     return QVariant();
 }
@@ -34,6 +121,15 @@ bool ControlModel::setData(const QModelIndex &index, const QVariant &value, int 
 {
     if (data(index, role) != value) {
         // FIXME: Implement me!
+        cell *cur = cells.at(index.row());
+        switch (role)
+        {
+            case x_role: cur->x = value.toInt();
+            case y_role: cur->y = value.toInt();
+            case noise_role: cur->noise = value.toDouble();
+            case color_role: cur->color = QColor(value.toInt());
+        }
+
         emit dataChanged(index, index, QVector<int>() << role);
         return true;
     }
@@ -69,107 +165,12 @@ bool ControlModel::removeRows(int row, int count, const QModelIndex &parent)
 QHash<int, QByteArray> ControlModel::roleNames() const
 {
     QHash<int, QByteArray> names;
-    names[StartX_Role] = "start_x";
-    names[StartY_Role] = "start_y";
+    names[x_role] = "x";
+    names[y_role] = "y";
+    names[noise_role] = "noise";
+    names[color_role] = "color";
     return names;
 }
 
-//======================================================
-void ControlModel::gen(int x_range,int y_range, int generations)
-{
-    int sx=getRandomInt(0,x_range);
-    int sy=-10;
-    int ex=getRandomInt(-100,100)+sx;
-    int ey=sy+y_range;
 
-    double maxOffcet = 0.1;
-
-    QList<cell*> generated;
-    generated.push_back(new cell(sx,sy,ex,ey,5, this));
-
-    for (int i = 0; i < generations; i++)
-    {
-        QList<cell*> local;
-
-        for (auto cur : generated)
-        {
-            int sx = cur->start_x;
-            int sy = cur->start_y;
-
-            int ex = cur->end_x;
-            int ey = cur->end_y;
-
-            //find middle point
-            int dx = ex - sx;
-            int dy = ey - sy;
-
-            double choose = getRandom() * 0.2 + 0.4;
-            int midX = int(dx * choose + sx);
-            int midY = int(dy * choose + sy);
-
-            //perpendicular
-            if (getRandom() > 0.5)
-                maxOffcet = -maxOffcet;
-
-            double lineCoeff = getRandom() * 2 * maxOffcet - maxOffcet;
-            lineCoeff = maxOffcet;
-
-            int px = int(lineCoeff * dy * -1);
-            int py = int(lineCoeff * dx);
-
-            midX += px;
-            midY += py;
-
-            //fork form
-            int dirX = midX - sx;
-            int dirY = midY - sy;
-
-            //add new segments
-
-            local.push_back(new cell(sx, sy, midX, midY, cur->size, this));
-            local.push_back(new cell(midX, midY, ex, ey, cur->size, this));
-
-            double r = getRandom();
-            if (r > 0.4)
-            {
-                local.push_back(new cell(midX, midY, midX + dirX, midY + dirY,
-                                            cur->size / 2, this));
-            }
-
-            delete cur;
-        }
-        generated.clear();
-
-        generated = local;
-    }
-    beginResetModel();
-    cells.clear();
-    cells = generated;
-    endResetModel();
-
-    emit ControlModel::mapReady();
-}
-
-
-//========================================================
-//===========Counters================
-double ControlModel::countAverage(double data[],int data_size)
-{
-    double sum=0.;
-    for(int i=0;i<data_size;i++){
-        sum+=data[i];
-    }
-    return sum/data_size;
-}
-
-int ControlModel::getRandomInt(int min,int max)
-{
-
-    return (qrand() % (max-min)) + min;
-
-}
-double ControlModel::getRandom()
-{
-    return double(getRandomInt(0,10000))/double(10000);
-}
 

@@ -13,14 +13,30 @@ Window {
     Control {
         id: ctrl
         onMapReady: {
-            lview.model = ctrl
+            //lview.model = ctrl
             //repa.model = ctrl
+            scroll.contentWidth = repa.width    // The important part
+            scroll.contentHeight = repa.height
+            console.log(repa.width)
         }
     }
     Button {
         text: "Click me!"
         onClicked: {
-            ctrl.gen(1000, 1000,  4);
+            repa.width = 40 * 50;
+            repa.height = 40 * 50;
+            ctrl.gen(40, 40);
+
+            //console.log(ctrl.Cells)
+            //console.log(ctrl.Cells.length)
+            //console.log(ctrl.Cells[0].start_x)
+        }
+    }
+    Button {
+        x: 100
+        text: "Click me!"
+        onClicked: {
+            ctrl.update(5, 5, 10, 100);
 
             //console.log(ctrl.Cells)
             //console.log(ctrl.Cells.length)
@@ -29,48 +45,45 @@ Window {
     }
 
     ScrollView {
+        id: scroll
         x: 100
         y: 100
-        width: 500
-        height: 500
+        width: parent.width - x * 2
+        height: parent.height - y * 2
         clip: true
+        contentWidth: repa.width    // The important part
+        contentHeight: repa.height
 
-        ListView {
-            id: lview
-            x: 200
-            y: 100
-            width: 100; height: 1000
+        Repeater {
+            id: repa
+            //required model
             model: ctrl
+
 
             delegate: Rectangle {
                 //required start_x
-                //required start_y
 
-                height: 25
-                width: 100
-                Text { text: model.start_x }
+                width: 50
+                height: 50
+                x: model.x * width
+                y: model.y * height
+                color: model.color
+                Text {
+                    id: name
+                    text: qsTr(Math.round(noise).toString())
+                }
+                MouseArea {
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    anchors.fill: parent
+                    onClicked: {
+                        //model.noise = 30
+                        ctrl.update(model.x, model.y, 10, 40);
+                    }
+                }
             }
         }
+
+
     }
 
-//    Repeater {
-//        x: 100
-//        y: 100
-//        id: repa
-//        //required model
-//        model: ctrl
-
-
-//        delegate: Rectangle {
-//            //required start_x
-
-//            width: 100
-//            height: 100
-//            color: "red"
-//            Text {
-//                id: name
-//                //text: qsTr(start_x.toString())
-//            }
-//        }
-//    }
 }

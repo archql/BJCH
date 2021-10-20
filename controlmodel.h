@@ -3,6 +3,7 @@
 
 #include <QAbstractListModel>
 #include "cell.h"
+#include "cordsystem.h"
 
 class ControlModel : public QAbstractListModel
 {
@@ -12,9 +13,11 @@ public:
     explicit ControlModel(QObject *parent = nullptr);
 
     // General
-    Q_INVOKABLE void gen(int x_range,int y_range, int generations);
+    Q_INVOKABLE void gen(int widht,int height);
 
+    Q_INVOKABLE void update(int x,int y, int radius, int force);
 
+    void raycast(double x,double y, double vx, double vy, double force);
 
 
 
@@ -38,8 +41,10 @@ public:
     // There is roles of each property element has
     enum
     {
-        StartX_Role = Qt::UserRole,
-        StartY_Role
+        x_role = Qt::UserRole,
+        y_role,
+        noise_role,
+        color_role
     };
     virtual QHash<int, QByteArray> roleNames() const override;
 
@@ -48,11 +53,8 @@ signals:
 
 private:
     QList<cell*> cells;
+    CordSystem cells_system;
     // TEMP!!!!
-    double countAverage(double data[],int data_size);
-
-    int getRandomInt(int min,int max);
-    double getRandom();
 };
 
 #endif // CONTROLMODEL_H
