@@ -4,12 +4,12 @@ import QtQuick.Controls 2.5
 
 import controlmodel 1.0
 
+
 Window {
     id: window
     width: Screen.width
     height: Screen.height
     visible: true
-
     Control {
         id: ctrl
         onMapReady: {
@@ -43,7 +43,50 @@ Window {
             //console.log(ctrl.Cells[0].start_x)
         }
     }
+    Button {
+        x: 400
+        text: "Emitter!"
+        onClicked: {
+            ctrl.changeActive1();
 
+            //console.log(ctrl.Cells)
+            //console.log(ctrl.Cells.length)
+            //console.log(ctrl.Cells[0].start_x)
+        }
+    }
+    Button {
+        x: 500
+        text: "Wall1!"
+        onClicked: {
+            ctrl.changeActive2();
+
+            //console.log(ctrl.Cells)
+            //console.log(ctrl.Cells.length)
+            //console.log(ctrl.Cells[0].start_x)
+        }
+    }
+    Button {
+        x: 600
+        text: "Wall2!"
+        onClicked: {
+            ctrl.changeActive3();
+
+            //console.log(ctrl.Cells)
+            //console.log(ctrl.Cells.length)
+            //console.log(ctrl.Cells[0].start_x)
+        }
+    }
+    Button {
+        x: 700
+        text: "Wall3!"
+        onClicked: {
+            ctrl.changeActive4();
+
+            //console.log(ctrl.Cells)
+            //console.log(ctrl.Cells.length)
+            //console.log(ctrl.Cells[0].start_x)
+        }
+    }
     ScrollView {
         id: scroll
         x: 100
@@ -70,6 +113,7 @@ Window {
                 color: model.color
                 Text {
                     id: name
+                    //onFontSizeModeChanged: 25
                     text: qsTr(Math.round(noise).toString())
                 }
                 MouseArea {
