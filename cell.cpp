@@ -11,8 +11,8 @@ cell::cell(int x, int y, QObject *parent) : QObject(parent)
 
     this->x = x;
     this->y = y;
-    noise = 0;
-    color = Qt::red;
+    noise = 0.f;
+    color = getNoiseColor();
     typeOfCell = "Air";
 }
 

@@ -54,68 +54,87 @@ void ControlModel::changeActive4(){
     activeState = 4;
 }
 void ControlModel::update(int x,int y, int radius, int force)
-{   cell *c = cells[cells_system.toLinear(round(x), round(y))];
-    if(activeState==4) {
-    c->typeOfCell = "Wall3";
-    c->color = c->getNoiseColor();
-    c->absorb = 45;
-    c->reflect = 45;
+{
+    cell *c = cells[cells_system.toLinear(round(x), round(y))];
+    if (activeState==4)
+    {
+        c->typeOfCell = "Wall3";
+        c->color = c->getNoiseColor();
+        c->absorb = 45;
+        c->reflect = 45;
     }
-    else if(activeState==3) {
-    c->typeOfCell = "Wall2";
-    c->color = c->getNoiseColor();
-    c->absorb = 35;
-    c->reflect = 35;
+    else if(activeState==3)
+    {
+        c->typeOfCell = "Wall2";
+        c->color = c->getNoiseColor();
+        c->absorb = 35;
+        c->reflect = 35;
     }
-    else if(activeState==2) {
-    c->typeOfCell = "Wall1";
-    c->color = c->getNoiseColor();
-    c->absorb = 25;
-    c->reflect = 25;
+    else if(activeState==2)
+    {
+        c->typeOfCell = "Wall1";
+        c->color = c->getNoiseColor();
+        c->absorb = 25;
+        c->reflect = 25;
     }
-    else if(activeState==1) {
-    c->typeOfCell = "Emitter";
-    int i = 0, curx, cury;
-//    for (cell *c : qAsConst(cells))
-//    {
-//        cells_system.toBilinear(i, curx, cury);
-//        // count noise
-//        double tmpn = sqrt((x - curx)*(x - curx) + (y - cury)*(y - cury));
-//        qInfo()<<tmpn;
-//        if (tmpn < radius)
-//            c->noise = force - 1*(tmpn*tmpn); // 5 is constant
-//        else
-//            c->noise = 0;
-//        // get clr
-//        c->color = c->getNoiseColor();
+    else if (activeState == 1 && (force != 0))
+    {
+        c->typeOfCell = "Emitter";
+        // emit temp
 
-//        i++;
-//    }
-      for (double a = 0; a < 6.28; a += 0.06)
-      {
-    //double a = 4.0;
-        raycast(x, y, sin(a), cos(a), force);
-      }
-    // temp
+        for (cell *c : qAsConst(cells))
+            c->visited.clear();
+
+        float step = 100. / (float)(force * force);
+        qInfo() << "Step is " << step;
+          for (float a = 0; a < 6.28; a += step)
+          {
+        //double a = 4.0;
+            raycast(x, y, sin(a), cos(a), force, 0.f, 0);
+          }
+        // temp
+
     }
-    QModelIndex topLeft = createIndex(0,0);
     QModelIndex bottomLeft = createIndex(cells_system.maxLinear(), 0);
+    QModelIndex topLeft = createIndex(0, 0);
     emit dataChanged(topLeft, bottomLeft);
 
 }
 
-void ControlModel::raycast(double x, double y, double vx, double vy, double force)
+void ControlModel::raycast(float x, float y, float vx, float vy, float force, float dst, int gen)
 {
-    while (force > 1.) {
+    if (gen > 6 /*|| !cells_system.atSystem(x + vx, y + vy)*/)
+        return;
+    float real_force = force;
+    int max_x, max_y;
+
+    while (real_force > 1.f) {
         // add force
         cell *c = cells[cells_system.toLinear(round(x), round(y))];
-        c->noise = sqrt((c->noise * c->noise) + (force*force));//+= force;
-        c->color = c->getNoiseColor();
+        if (!c->visited.contains(gen))
+        {
+            c->noise = 10 * log10f(powf(10, 0.1f * c->noise) + powf(10, 0.1f * real_force));//sqrt((c->noise * c->noise) + (force*force));//+= force;
+            c->color = c->getNoiseColor();
+            c->visited << gen;
+        }
+        // if we went out of field
+        if (!cells_system.atSystem(x + vx, y + vy)) // point
+        {
+            cells_system.get(max_x, max_y);
+            if (x + vx < 0 || x + vx >= max_x)
+                vx = -vx;
+            if (y + vy < 0 || y + vy >= max_y)
+                vy = -vy;
+            raycast(x, y, vx, vy, real_force, dst + 1.f, gen + 1);
+            break; // kill cur ray
+        }
         // mov point
         x += vx;
         y += vy;
+        dst += 1.f;
+        real_force = force - 6*log2f(dst) - 11.f;
         // dec force
-        force -= 3.; // temp value -6db ??
+        //force -= 3.; // temp value -6db ??
     }
 
 }

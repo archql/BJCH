@@ -17,12 +17,13 @@ public:
 
     Q_INVOKABLE void update(int x,int y, int radius, int force);
 
-    void raycast(double x,double y, double vx, double vy, double force);
     Q_INVOKABLE void changeActive1();
     Q_INVOKABLE void changeActive2();
     Q_INVOKABLE void changeActive3();
     Q_INVOKABLE void changeActive4();
     int activeState;
+
+    void raycast(float x,float y, float vx, float vy, float force, float dst, int gen);
 
     // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;

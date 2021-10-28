@@ -1,6 +1,7 @@
-import QtQuick 2.0
+import QtQuick 2.6
 import QtQuick.Window 2.3
 import QtQuick.Controls 2.5
+import QtQuick.Layouts 1.3
 
 import controlmodel 1.0
 
@@ -20,73 +21,82 @@ Window {
             console.log(repa.width)
         }
     }
-    Button {
-        text: "Click me!"
-        onClicked: {
-            repa.width = 40 * 50;
-            repa.height = 40 * 50;
-            ctrl.gen(40, 40);
+    RowLayout {
+        Button {
+            text: "Click me!"
+            onClicked: {
+                repa.width = 40 * 50;
+                repa.height = 40 * 50;
+                ctrl.gen(40, 40);
 
-            //console.log(ctrl.Cells)
-            //console.log(ctrl.Cells.length)
-            //console.log(ctrl.Cells[0].start_x)
+                //console.log(ctrl.Cells)
+                //console.log(ctrl.Cells.length)
+                //console.log(ctrl.Cells[0].start_x)
+            }
+        }
+        Button {
+            text: "Click me!"
+            onClicked: {
+                ctrl.update(5, 5, 10, 100);
+
+                //console.log(ctrl.Cells)
+                //console.log(ctrl.Cells.length)
+                //console.log(ctrl.Cells[0].start_x)
+            }
+        }
+        Button {
+            text: "Emitter!"
+            onClicked: {
+                ctrl.changeActive1();
+                //console.log(ctrl.Cells)
+                //console.log(ctrl.Cells.length)
+                //console.log(ctrl.Cells[0].start_x)
+            }
+        }
+        Button {
+            text: "Wall1!"
+            onClicked: {
+                ctrl.changeActive2();
+
+                //console.log(ctrl.Cells)
+                //console.log(ctrl.Cells.length)
+                //console.log(ctrl.Cells[0].start_x)
+            }
+        }
+        Button {
+            text: "Wall2!"
+            onClicked: {
+                ctrl.changeActive3();
+
+                //console.log(ctrl.Cells)
+                //console.log(ctrl.Cells.length)
+                //console.log(ctrl.Cells[0].start_x)
+            }
+        }
+        Button {
+            text: "Wall3!"
+            onClicked: {
+                ctrl.changeActive4();
+
+                //console.log(ctrl.Cells)
+                //console.log(ctrl.Cells.length)
+                //console.log(ctrl.Cells[0].start_x)
+            }
+        }
+
+        TextField {
+            id: tedit
+            width: 300
+            height: 30
+            placeholderText: "Enter emitter force:"
+            validator: IntValidator
+            {
+                bottom: 1
+                top: 150
+            }
         }
     }
-    Button {
-        x: 100
-        text: "Click me!"
-        onClicked: {
-            ctrl.update(5, 5, 10, 100);
 
-            //console.log(ctrl.Cells)
-            //console.log(ctrl.Cells.length)
-            //console.log(ctrl.Cells[0].start_x)
-        }
-    }
-    Button {
-        x: 400
-        text: "Emitter!"
-        onClicked: {
-            ctrl.changeActive1();
-
-            //console.log(ctrl.Cells)
-            //console.log(ctrl.Cells.length)
-            //console.log(ctrl.Cells[0].start_x)
-        }
-    }
-    Button {
-        x: 500
-        text: "Wall1!"
-        onClicked: {
-            ctrl.changeActive2();
-
-            //console.log(ctrl.Cells)
-            //console.log(ctrl.Cells.length)
-            //console.log(ctrl.Cells[0].start_x)
-        }
-    }
-    Button {
-        x: 600
-        text: "Wall2!"
-        onClicked: {
-            ctrl.changeActive3();
-
-            //console.log(ctrl.Cells)
-            //console.log(ctrl.Cells.length)
-            //console.log(ctrl.Cells[0].start_x)
-        }
-    }
-    Button {
-        x: 700
-        text: "Wall3!"
-        onClicked: {
-            ctrl.changeActive4();
-
-            //console.log(ctrl.Cells)
-            //console.log(ctrl.Cells.length)
-            //console.log(ctrl.Cells[0].start_x)
-        }
-    }
     ScrollView {
         id: scroll
         x: 100
@@ -121,7 +131,7 @@ Window {
                     anchors.fill: parent
                     onClicked: {
                         //model.noise = 30
-                        ctrl.update(model.x, model.y, 10, 40);
+                        ctrl.update(model.x, model.y, 10, parseInt(tedit.text));
                     }
                 }
             }
