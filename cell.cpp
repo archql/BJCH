@@ -11,8 +11,9 @@ cell::cell(int x, int y, QObject *parent) : QObject(parent)
 
     this->x = x;
     this->y = y;
-    noise = 0.;
+    noise = 0;
     color = Qt::red;
+    typeOfCell = "Air";
 }
 
 cell::~cell()
@@ -35,6 +36,10 @@ void cell::setNeibours(cell *p0, cell *p1, cell *p2, cell *p3)
 // static
 QColor cell::getNoiseColor()
 {
+    if(typeOfCell=="Wall1") return QColor("lightGray");
+    if(typeOfCell=="Wall2") return QColor("darkGray");
+    if(typeOfCell=="Wall3") return QColor("gray");
+    if(typeOfCell=="Emitter") return QColor("black");
     if(noise <= 5)
         return QColor("skyblue");
     else if(noise <=10)

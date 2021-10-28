@@ -13,7 +13,6 @@ SOURCES += \
     controlmodel.cpp \
     cordsystem.cpp \
     main.cpp \
-    main.cpp
 
 HEADERS += \
     cell.h \
