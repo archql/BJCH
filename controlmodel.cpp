@@ -1,5 +1,5 @@
 #include "controlmodel.h"
-
+#include "math.h"
 ControlModel::ControlModel(QObject *parent)
     : QAbstractListModel(parent)
 {
@@ -9,6 +9,7 @@ ControlModel::ControlModel(QObject *parent)
 //======================================================
 void ControlModel::gen(int width,int height)
 {
+    activeState = 1;
     cells_system.set(width, height);
 
     beginResetModel();
@@ -40,9 +41,40 @@ void ControlModel::gen(int width,int height)
 
     emit ControlModel::mapReady();
 }
-
+void ControlModel::changeActive1(){
+    activeState = 1;
+}
+void ControlModel::changeActive2(){
+    activeState = 2;
+}
+void ControlModel::changeActive3(){
+    activeState = 3;
+}
+void ControlModel::changeActive4(){
+    activeState = 4;
+}
 void ControlModel::update(int x,int y, int radius, int force)
-{
+{   cell *c = cells[cells_system.toLinear(round(x), round(y))];
+    if(activeState==4) {
+    c->typeOfCell = "Wall3";
+    c->color = c->getNoiseColor();
+    c->absorb = 45;
+    c->reflect = 45;
+    }
+    else if(activeState==3) {
+    c->typeOfCell = "Wall2";
+    c->color = c->getNoiseColor();
+    c->absorb = 35;
+    c->reflect = 35;
+    }
+    else if(activeState==2) {
+    c->typeOfCell = "Wall1";
+    c->color = c->getNoiseColor();
+    c->absorb = 25;
+    c->reflect = 25;
+    }
+    else if(activeState==1) {
+    c->typeOfCell = "Emitter";
     int i = 0, curx, cury;
 //    for (cell *c : qAsConst(cells))
 //    {
@@ -65,10 +97,11 @@ void ControlModel::update(int x,int y, int radius, int force)
         raycast(x, y, sin(a), cos(a), force);
       }
     // temp
-
+    }
     QModelIndex topLeft = createIndex(0,0);
     QModelIndex bottomLeft = createIndex(cells_system.maxLinear(), 0);
     emit dataChanged(topLeft, bottomLeft);
+
 }
 
 void ControlModel::raycast(double x, double y, double vx, double vy, double force)
