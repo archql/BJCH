@@ -13,11 +13,13 @@ SOURCES += \
     controlmodel.cpp \
     cordsystem.cpp \
     main.cpp \
+    storage.cpp
 
 HEADERS += \
     cell.h \
     controlmodel.h \
-    cordsystem.h
+    cordsystem.h \
+    storage.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

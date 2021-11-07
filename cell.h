@@ -12,17 +12,22 @@ class cell : public QObject
 public:
     explicit cell(QObject *parent = nullptr);
     cell(int x, int y, QObject *parent = nullptr);
+    cell(int x, int y, QString cellType, QObject *parent = nullptr);
     ~cell();
+
+    void setNoise(const float noise);
+    void setType(const QString cellType);
+
+    float getNoise() const;
+    QString getType() const;
 
     QVector<cell *> &rneibours();
     void setNeibours(cell *p0, cell *p1, cell *p2, cell *p3); 
     int x;
     int y;
-    QString snoise;
-    float noise;
+    //QString snoise;
     QSet<int> visited;
     QColor color;
-    QString typeOfCell;
     int absorb;
     int reflect;
 	
@@ -39,6 +44,8 @@ signals:
 
 private:
     QVector<cell *> Neibours;
+    QString typeOfCell;
+    float noise;
 
 };
 

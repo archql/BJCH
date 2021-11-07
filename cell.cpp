@@ -12,13 +12,57 @@ cell::cell(int x, int y, QObject *parent) : QObject(parent)
     this->x = x;
     this->y = y;
     noise = 0.f;
+    setType("Air");
     color = getNoiseColor();
-    typeOfCell = "Air";
+}
+
+cell::cell(int x, int y, QString cellType, QObject *parent) : QObject(parent)
+{
+    Neibours.fill(nullptr, 4);
+
+    this->x = x;
+    this->y = y;
+    noise = 0.f;
+    setType(cellType);
+    color = getNoiseColor();
 }
 
 cell::~cell()
 {
 
+}
+
+void cell::setNoise(const float noise)
+{
+    this->noise = noise;
+    color = getNoiseColor();
+}
+void cell::setType(const QString cellType)
+{
+    typeOfCell = cellType;
+    color = getNoiseColor();
+    // do some processing
+    if (typeOfCell == "Wall1") {
+        absorb = 10;
+        reflect = 90;
+    } else if (typeOfCell == "Wall2") {
+        absorb = 20;
+        reflect = 80;
+    } else if (typeOfCell == "Wall3") {
+        absorb = 30;
+        reflect = 70;
+    } else {
+        absorb = -1;
+        reflect = -1;
+    }
+}
+float cell::getNoise() const
+{
+    return noise;
+}
+QString cell::getType() const
+{
+    return typeOfCell;
 }
 
 QVector<cell *> &cell::rneibours()
@@ -36,10 +80,10 @@ void cell::setNeibours(cell *p0, cell *p1, cell *p2, cell *p3)
 // static
 QColor cell::getNoiseColor()
 {
-    if(typeOfCell=="Wall1") return QColor("lightGray");
-    if(typeOfCell=="Wall2") return QColor("darkGray");
-    if(typeOfCell=="Wall3") return QColor("gray");
-    if(typeOfCell=="Emitter") return QColor("black");
+    if(typeOfCell == "Wall1") return QColor("lightGray");
+    if(typeOfCell == "Wall2") return QColor("darkGray");
+    if(typeOfCell == "Wall3") return QColor("gray");
+    if(typeOfCell == "Emitter") return QColor("black");
     if(noise <= 5)
         return QColor("skyblue");
     else if(noise <=10)

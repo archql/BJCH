@@ -2,8 +2,12 @@
 #define CONTROLMODEL_H
 
 #include <QAbstractListModel>
+#include <QDateTime>
 #include "cell.h"
 #include "cordsystem.h"
+#include "storage.h"
+
+static int MAX_GEN_CNT = 5;
 
 class ControlModel : public QAbstractListModel
 {
@@ -13,9 +17,13 @@ public:
     explicit ControlModel(QObject *parent = nullptr);
 
     // General
-    Q_INVOKABLE void gen(int widht,int height);
+    Q_INVOKABLE void gen(int widht, int height);
+    Q_INVOKABLE void gen(int widht, int height, QVector<QString> cell_types);
 
     Q_INVOKABLE void update(int x,int y, int radius, int force);
+
+    Q_INVOKABLE bool saveToFile(QString filename);
+    Q_INVOKABLE bool ldFromFile(QString filename);
 
     Q_INVOKABLE void changeActive1();
     Q_INVOKABLE void changeActive2();
@@ -58,6 +66,7 @@ signals:
 private:
     QList<cell*> cells;
     CordSystem cells_system;
+    Storage storage;
     // TEMP!!!!
 };
 

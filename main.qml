@@ -95,6 +95,30 @@ Window {
                 top: 150
             }
         }
+
+        TextField {
+            id: fedit
+            width: 300
+            height: 30
+            placeholderText: "Enter file name:"
+        }
+
+        Button {
+            text: "Save field as shematic"
+            onClicked: {
+                var filename = fedit.text
+                if (filename !== "" || filename !== "true" || filename !== "false")
+                    fedit.text = ctrl.saveToFile(filename)
+            }
+        }
+        Button {
+            text: "Load field as shematic"
+            onClicked: {
+                var filename = fedit.text
+                if (filename !== "" || filename !== "true" || filename !== "false")
+                    fedit.text = ctrl.ldFromFile(filename)
+            }
+        }
     }
 
     ScrollView {
