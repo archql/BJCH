@@ -84,8 +84,10 @@ void CordSystem::toSystem(QPointF &p)
 
 int CordSystem::toLinear(int x, int y)
 {
-    toSystem(x,y);
-    return (y-min_y)*(max_x-min_x)+ x-min_x;
+    if (atSystem(x, y))
+        return (y-min_y)*(max_x-min_x)+ x-min_x;
+   else
+        return -1;
 }
 void CordSystem::toBilinear(const int i, int &x, int &y)
 {

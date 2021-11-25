@@ -3,11 +3,42 @@
 
 #include <QAbstractListModel>
 #include <QDateTime>
+#include <QQueue>
 #include "cell.h"
 #include "cordsystem.h"
 #include "storage.h"
 
-static int MAX_GEN_CNT = 5;
+static const int MAX_GEN_CNT = 1;
+static const float STEP = 0.25f;
+
+//typedef struct
+//{
+//    cell *c;
+//    float force;
+//    int gen;
+//} npacket;
+
+typedef struct
+{
+    cell *c;
+    float force;
+    int gen;
+    float x, y, vx, vy;
+} npacket;
+
+static float Q_rsqrt( float number )
+{
+    const float x2 = number * 0.5F;
+    const float threehalfs = 1.5F;
+
+    union {
+        float f;
+        uint32_t i;
+    } conv = {number}; // member 'f' set to value of 'number'.
+    conv.i = 0x5f3759df - ( conv.i >> 1 );
+    conv.f *= threehalfs - x2 * conv.f * conv.f;
+    return conv.f;
+}
 
 class ControlModel : public QAbstractListModel
 {
@@ -25,13 +56,18 @@ public:
     Q_INVOKABLE bool saveToFile(QString filename);
     Q_INVOKABLE bool ldFromFile(QString filename);
 
-    Q_INVOKABLE void changeActive1();
-    Q_INVOKABLE void changeActive2();
-    Q_INVOKABLE void changeActive3();
-    Q_INVOKABLE void changeActive4();
-    int activeState;
+//    Q_INVOKABLE void changeActive1();
+//    Q_INVOKABLE void changeActive2();
+//    Q_INVOKABLE void changeActive3();
+//    Q_INVOKABLE void changeActive4();
+//    int activeState;
 
-    void raycast(float x,float y, float vx, float vy, float force, float dst, int gen);
+    void reset_neibours();
+    void raycast(float x,float y, float vx, float vy, float force, float dst, int gen, bool atWall);
+    void raycastX(cell *c, float sx, float sy, float force);
+    void raycastY(cell *cd, float force);
+
+    void spread(cell *c, int sx, int sy, float force, int gen);
 
     // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -56,17 +92,24 @@ public:
         x_role = Qt::UserRole,
         y_role,
         noise_role,
-        color_role
+        color_role,
+        wstate_role,
+        stype_role
     };
     virtual QHash<int, QByteArray> roleNames() const override;
 
 signals:
     void mapReady();
+    void cellChanged(int index);
+public slots:
+    void receiveCellChange(const int x, const int y);
 
 private:
     QList<cell*> cells;
     CordSystem cells_system;
     Storage storage;
+
+    QQueue<npacket> queue;
     // TEMP!!!!
 };
 

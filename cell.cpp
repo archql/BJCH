@@ -2,13 +2,18 @@
 
 cell::cell(QObject *parent) : QObject(parent)
 {
-    Neibours.fill(nullptr, 4);
-}
+    Neibours.fill(nullptr, 8);
+    setType("Air");
 
+    connect(this, SIGNAL(selfChanged(int,int)), parent, SLOT(receiveCellChange(int,int)));
+}
 cell::cell(int x, int y, QObject *parent) : QObject(parent)
 {
-    Neibours.fill(nullptr, 4);
+    connect(this, SIGNAL(selfChanged(int,int)), parent, SLOT(receiveCellChange(int,int)));
 
+    Neibours.fill(nullptr, 8);
+
+    wallstate = 0;
     this->x = x;
     this->y = y;
     noise = 0.f;
@@ -18,8 +23,11 @@ cell::cell(int x, int y, QObject *parent) : QObject(parent)
 
 cell::cell(int x, int y, QString cellType, QObject *parent) : QObject(parent)
 {
-    Neibours.fill(nullptr, 4);
+    connect(this, SIGNAL(selfChanged(int,int)), parent, SLOT(receiveCellChange(int,int)));
 
+    Neibours.fill(nullptr, 8);
+
+    wallstate = 0;
     this->x = x;
     this->y = y;
     noise = 0.f;
@@ -50,11 +58,38 @@ void cell::setType(const QString cellType)
         reflect = 80;
     } else if (typeOfCell == "Wall3") {
         absorb = 30;
-        reflect = 70;
+        reflect = 100; //90
     } else {
         absorb = -1;
         reflect = -1;
     }
+
+    if ((absorb != -1) != (wallstate & 1))
+    {
+        for (cell *c : Neibours)
+            c->checkWallstate(); // do it not for all -- only for changed
+        wallstate ^= 1;
+    }
+    qInfo() << "Wallstate check!";
+    emit selfChanged(x, y);
+}
+
+void cell::checkWallstate()
+{
+    int wallstate_old = wallstate;
+    int mask = 1; // zero bit is for self-walled check
+    wallstate &= 1;
+    for (cell *c : Neibours)
+    {
+        mask <<= 1;
+        if (c == nullptr)
+            continue;
+        if ((c->absorb != -1) != !!(wallstate_old & mask))
+        {
+            wallstate ^= mask; // do if wallstate changed
+        }
+    }
+    emit selfChanged(x, y);
 }
 float cell::getNoise() const
 {
@@ -69,12 +104,16 @@ QVector<cell *> &cell::rneibours()
 {
     return Neibours;
 }
-void cell::setNeibours(cell *p0, cell *p1, cell *p2, cell *p3)
+void cell::setNeibours(cell *p0, cell *p1, cell *p2, cell *p3, cell *p4, cell *p5, cell *p6, cell *p7)
 {
     Neibours[0] = p0;
     Neibours[1] = p1;
     Neibours[2] = p2;
     Neibours[3] = p3;
+    Neibours[4] = p4;
+    Neibours[5] = p5;
+    Neibours[6] = p6;
+    Neibours[7] = p7;
 }
 
 // static

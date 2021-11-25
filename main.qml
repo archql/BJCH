@@ -19,6 +19,12 @@ Window {
             scroll.contentWidth = repa.width    // The important part
             scroll.contentHeight = repa.height
             console.log(repa.width)
+
+
+        }
+        onCellChanged: {
+            //repa.itemAt(index).texnum = wallstate;
+            console.log("Changed! ", wallstate >> 1)
         }
     }
     RowLayout {
@@ -140,11 +146,13 @@ Window {
             delegate: Rectangle {
                 //required start_x
 
+                property int texnum: 0
+
                 width: 50
                 height: 50
                 x: model.x * width
                 y: model.y * height
-                color: model.color
+                //color: model.color
                 Text {
                     id: name
                     //onFontSizeModeChanged: 25
@@ -155,9 +163,32 @@ Window {
                     anchors.fill: parent
                     onClicked: {
                         //model.noise = 30
-                        ctrl.update(model.x, model.y, 10, parseInt(tedit.text));
+                        //ctrl.update(model.x, model.y, 10, parseInt(tedit.text));
+                        model.typeOfCell = "Wall1"
+
+                        //texture.source = "sources/textures/floor_" + Number((model.wstate >> 1) & 0x55) + ".jpg"
                     }
                 }
+
+                Image {
+                    id: texture
+                    anchors.fill: parent
+                    source: "sources/textures/floor_" + Number(model.wstate >> 1) + ".jpg"
+                    cache: true
+                    onSourceChanged: {
+                        console.log("!!! Source changed ", Number((texnum >> 1) & 0x55))
+                    }
+                }
+                Image {
+                    id: texture_up
+                    anchors.fill: parent
+                    source: "sources/textures/tex_" + model.typeOfCell + ".png"
+                    visible: model.typeOfCell !== "Air"
+                    cache: true
+                }
+
+
+
             }
         }
 
