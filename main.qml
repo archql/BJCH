@@ -11,6 +11,9 @@ Window {
     width: Screen.width
     height: Screen.height
     visible: true
+
+    property string selectedItem: "Air"
+
     Control {
         id: ctrl
         onMapReady: {
@@ -23,17 +26,19 @@ Window {
 
         }
         onCellChanged: {
-            //repa.itemAt(index).texnum = wallstate;
-            console.log("Changed! ", wallstate >> 1)
+            if (repa.count == 0)
+                return
+            repa.itemAt(c.index).texname = Number((c.wstate >> 1) & 0x55);
+            console.log("Changed! ", c.wstate, " index ", c.index)
         }
     }
     RowLayout {
         Button {
             text: "Click me!"
             onClicked: {
-                repa.width = 40 * 50;
-                repa.height = 40 * 50;
-                ctrl.gen(40, 40);
+                repa.width = 25 * 60;
+                repa.height = 20 * 60;
+                ctrl.gen(25, 20);
 
                 //console.log(ctrl.Cells)
                 //console.log(ctrl.Cells.length)
@@ -53,41 +58,44 @@ Window {
         Button {
             text: "Emitter!"
             onClicked: {
-                ctrl.changeActive1();
-                //console.log(ctrl.Cells)
-                //console.log(ctrl.Cells.length)
-                //console.log(ctrl.Cells[0].start_x)
+                selectedItem = "Emitter"
             }
         }
         Button {
             text: "Wall1!"
             onClicked: {
-                ctrl.changeActive2();
-
-                //console.log(ctrl.Cells)
-                //console.log(ctrl.Cells.length)
-                //console.log(ctrl.Cells[0].start_x)
+                selectedItem = "Wall1"
             }
         }
         Button {
             text: "Wall2!"
             onClicked: {
-                ctrl.changeActive3();
-
-                //console.log(ctrl.Cells)
-                //console.log(ctrl.Cells.length)
-                //console.log(ctrl.Cells[0].start_x)
+                selectedItem = "Wall2"
             }
         }
         Button {
             text: "Wall3!"
             onClicked: {
-                ctrl.changeActive4();
-
-                //console.log(ctrl.Cells)
-                //console.log(ctrl.Cells.length)
-                //console.log(ctrl.Cells[0].start_x)
+                selectedItem = "Wall3"
             }
+        }
+        Button {
+            text: "Wall4!"
+            onClicked: {
+                selectedItem = "Wall4"
+            }
+        }
+        Button {
+            text: "WorkPlace"
+            onClicked: {
+                selectedItem = "Workplace"
+            }
+        }
+
+        CheckBox
+        {
+            id: chooseOverlay
+            text: "switch noise overlay"
         }
 
         TextField {
@@ -142,49 +150,67 @@ Window {
             //required model
             model: ctrl
 
-
-            delegate: Rectangle {
+            delegate: Image {
                 //required start_x
 
-                property int texnum: 0
+                source: "sources/textures/floor_" + texname + ".jpg"
+                cache: true
 
-                width: 50
-                height: 50
+                property string texname: "0"
+
+                width: 60
+                height: 60
                 x: model.x * width
                 y: model.y * height
                 //color: model.color
-                Text {
-                    id: name
-                    //onFontSizeModeChanged: 25
-                    text: qsTr(Math.round(noise).toString())
-                }
+
                 MouseArea {
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     anchors.fill: parent
                     onClicked: {
                         //model.noise = 30
                         //ctrl.update(model.x, model.y, 10, parseInt(tedit.text));
-                        model.typeOfCell = "Wall1"
-
-                        //texture.source = "sources/textures/floor_" + Number((model.wstate >> 1) & 0x55) + ".jpg"
-                    }
-                }
-
-                Image {
-                    id: texture
-                    anchors.fill: parent
-                    source: "sources/textures/floor_" + Number(model.wstate >> 1) + ".jpg"
-                    cache: true
-                    onSourceChanged: {
-                        console.log("!!! Source changed ", Number((texnum >> 1) & 0x55))
+                        if (mouse.button == Qt.LeftButton)
+                        {
+                            model.typeOfCell = selectedItem
+                            if (selectedItem == "Emitter")
+                                model.noise = parseInt(tedit.text)
+                        }
+                        else
+                            model.typeOfCell = "Air"
                     }
                 }
                 Image {
                     id: texture_up
                     anchors.fill: parent
                     source: "sources/textures/tex_" + model.typeOfCell + ".png"
-                    visible: model.typeOfCell !== "Air"
+                    //visible: model.typeOfCell !== "Air"
                     cache: true
+                    onSourceChanged: {
+                        //console.log("BBB ")
+                    }
+                }
+                Text {
+                    id: name
+                    font.bold: true
+
+                    font.pixelSize: parent.width * 0.6
+                    color: model.color
+                    text: qsTr(Math.round(noise).toString())
+                    anchors.centerIn: parent
+                    //anchors.fill: parent
+
+                    onTextChanged: {
+                        color =  model.color
+                        overlay.color =  model.color
+                    }
+                    visible: chooseOverlay.checked
+                }
+                Rectangle {
+                    id: overlay
+                    anchors.fill: parent
+                    opacity: 0.35
+                    visible: chooseOverlay.checked
                 }
 
 

@@ -36,9 +36,20 @@
         <file>sources/textures/floor_8.jpg</file>
         <file>sources/textures/floor_9.jpg</file>
         <file>sources/textures/floor_tex.psd</file>
-        <file>sources/textures/tex_rm.png</file>
         <file>sources/textures/tex_Emitter.png</file>
         <file>sources/textures/tex_Wall1.jpg</file>
         <file>sources/textures/tex_Wall1.png</file>
+        <file>sources/textures/floor_64.jpg</file>
+        <file>sources/textures/floor_65.jpg</file>
+        <file>sources/textures/floor_68.jpg</file>
+        <file>sources/textures/floor_69.jpg</file>
+        <file>sources/textures/floor_80.jpg</file>
+        <file>sources/textures/floor_81.jpg</file>
+        <file>sources/textures/floor_84.jpg</file>
+        <file>sources/textures/floor_85.jpg</file>
+        <file>sources/textures/tex_Workplace.png</file>
+        <file>sources/textures/tex_Wall2.png</file>
+        <file>sources/textures/tex_Wall3.png</file>
+        <file>sources/textures/tex_Wall4.png</file>
     </qresource>
 </RCC>

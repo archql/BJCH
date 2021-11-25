@@ -21,7 +21,7 @@ void ControlModel::gen(int width, int height)
     for (i = 0; i < cells_system.maxLinear(); i++)
     {
         cells_system.toBilinear(i, x, y);
-        cells << new cell(x, y);
+        cells << new cell(x, y, i, this);
     }
 
     reset_neibours();
@@ -43,7 +43,7 @@ void ControlModel::gen(int width, int height, QVector<QString> cell_types)
     for (i = 0; i < cells_system.maxLinear(); i++)
     {
         cells_system.toBilinear(i, x, y);
-        cells << new cell(x, y, cell_types.at(i));
+        cells << new cell(x, y, i, cell_types.at(i), this);
     }
 
     reset_neibours();
@@ -649,12 +649,6 @@ bool ControlModel::ldFromFile(QString filename)
 
 //========================================================
 
-void ControlModel::receiveCellChange(const int x, const int y)
-{
-    qInfo() << "recieveCellChange";
-    emit cellChanged(cells_system.toLinear(x, y));
-}
-
 int ControlModel::rowCount(const QModelIndex &parent) const
 {
     // For list models only the root node (an invalid parent) should return the list's size. For all
@@ -691,12 +685,12 @@ bool ControlModel::setData(const QModelIndex &index, const QVariant &value, int 
         cell *cur = cells.at(index.row());
         switch (role)
         {
-            case x_role: cur->x = value.toInt();
-            case y_role: cur->y = value.toInt();
-            case noise_role: cur->setNoise(value.toFloat());
-            case color_role: cur->color = QColor(value.toInt());
-            case wstate_role: cur->wallstate = value.toInt();
-            case stype_role: cur->setType(value.toString());
+        case x_role: cur->x = value.toInt(); break;
+        case y_role: cur->y = value.toInt(); break;
+        case noise_role: cur->setNoise(value.toFloat()); break;
+        case color_role: cur->color = QColor(value.toInt()); break;
+        case wstate_role: cur->wallstate = value.toInt(); break;
+        case stype_role: cur->setType(value.toString()); break;
         }
 
         emit dataChanged(index, index, QVector<int>() << role);

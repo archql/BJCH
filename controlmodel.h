@@ -100,9 +100,7 @@ public:
 
 signals:
     void mapReady();
-    void cellChanged(int index);
-public slots:
-    void receiveCellChange(const int x, const int y);
+    void cellChanged(cell *c);
 
 private:
     QList<cell*> cells;

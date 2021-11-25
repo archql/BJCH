@@ -1,35 +1,32 @@
 #include "cell.h"
+#include "controlmodel.h"
 
 cell::cell(QObject *parent) : QObject(parent)
-{
+{    
     Neibours.fill(nullptr, 8);
     setType("Air");
-
-    connect(this, SIGNAL(selfChanged(int,int)), parent, SLOT(receiveCellChange(int,int)));
 }
-cell::cell(int x, int y, QObject *parent) : QObject(parent)
+cell::cell(int x, int y, int index, QObject *parent) : QObject(parent)
 {
-    connect(this, SIGNAL(selfChanged(int,int)), parent, SLOT(receiveCellChange(int,int)));
-
     Neibours.fill(nullptr, 8);
 
     wallstate = 0;
     this->x = x;
     this->y = y;
+    this->index = index;
     noise = 0.f;
     setType("Air");
     color = getNoiseColor();
 }
 
-cell::cell(int x, int y, QString cellType, QObject *parent) : QObject(parent)
+cell::cell(int x, int y, int index, QString cellType, QObject *parent) : QObject(parent)
 {
-    connect(this, SIGNAL(selfChanged(int,int)), parent, SLOT(receiveCellChange(int,int)));
-
     Neibours.fill(nullptr, 8);
 
     wallstate = 0;
     this->x = x;
     this->y = y;
+    this->index = index;
     noise = 0.f;
     setType(cellType);
     color = getNoiseColor();
@@ -42,8 +39,10 @@ cell::~cell()
 
 void cell::setNoise(const float noise)
 {
+    qInfo() << "setNoise " << noise;
     this->noise = noise;
     color = getNoiseColor();
+    qInfo() << "color " << color;
 }
 void cell::setType(const QString cellType)
 {
@@ -59,6 +58,9 @@ void cell::setType(const QString cellType)
     } else if (typeOfCell == "Wall3") {
         absorb = 30;
         reflect = 100; //90
+    } else if (typeOfCell == "Wall4") {
+        absorb = 60;
+        reflect = 100; //90
     } else {
         absorb = -1;
         reflect = -1;
@@ -66,30 +68,34 @@ void cell::setType(const QString cellType)
 
     if ((absorb != -1) != (wallstate & 1))
     {
+        int i = 0;
         for (cell *c : Neibours)
-            c->checkWallstate(); // do it not for all -- only for changed
+        {
+            if (c != nullptr)
+                c->checkWallstate((i + 4) % 8); // do it not for all -- only for changed
+            i++;
+        }
         wallstate ^= 1;
     }
+    // temporaly
+    auto model = dynamic_cast<ControlModel*>(parent());
+    if (model)
+    {
+        emit model->cellChanged(this);
+    }
     qInfo() << "Wallstate check!";
-    emit selfChanged(x, y);
 }
 
-void cell::checkWallstate()
+void cell::checkWallstate(const int index)
 {
-    int wallstate_old = wallstate;
-    int mask = 1; // zero bit is for self-walled check
-    wallstate &= 1;
-    for (cell *c : Neibours)
+    wallstate ^= 2 << index; // do if wallstate changed
+
+    // temporaly
+    auto model = dynamic_cast<ControlModel*>(parent());
+    if (model)
     {
-        mask <<= 1;
-        if (c == nullptr)
-            continue;
-        if ((c->absorb != -1) != !!(wallstate_old & mask))
-        {
-            wallstate ^= mask; // do if wallstate changed
-        }
+        emit model->cellChanged(this);
     }
-    emit selfChanged(x, y);
 }
 float cell::getNoise() const
 {
@@ -119,10 +125,11 @@ void cell::setNeibours(cell *p0, cell *p1, cell *p2, cell *p3, cell *p4, cell *p
 // static
 QColor cell::getNoiseColor()
 {
-    if(typeOfCell == "Wall1") return QColor("lightGray");
-    if(typeOfCell == "Wall2") return QColor("darkGray");
-    if(typeOfCell == "Wall3") return QColor("gray");
-    if(typeOfCell == "Emitter") return QColor("black");
+    //if(typeOfCell == "Wall1") return QColor("lightGray");
+    //if(typeOfCell == "Wall2") return QColor("darkGray");
+    //if(typeOfCell == "Wall3") return QColor("gray");
+    //if(typeOfCell == "Wall4") return QColor("gray");
+    //if(typeOfCell == "Emitter") return QColor("black");
     if(noise <= 5)
         return QColor("skyblue");
     else if(noise <=10)
