@@ -25,6 +25,15 @@ Window {
 
 
         }
+        onDataChanged:
+        {
+            // TEMP
+            //if (role === Qt.UserRole)
+                //for (i = 0; i < repa.count; i++)
+//                    repa.itemAt(i).
+            console.log("Data changed!")
+        }
+
         onCellChanged: {
             if (repa.count == 0)
                 return
@@ -46,9 +55,9 @@ Window {
             }
         }
         Button {
-            text: "Click me!"
+            text: "Update"
             onClicked: {
-                ctrl.update(5, 5, 10, 100);
+                ctrl.update();
 
                 //console.log(ctrl.Cells)
                 //console.log(ctrl.Cells.length)
@@ -156,13 +165,17 @@ Window {
                 source: "sources/textures/floor_" + texname + ".jpg"
                 cache: true
 
-                property string texname: "0"
+                property string texname: Number((model.wstate >> 1) & 0x55)
 
                 width: 60
                 height: 60
                 x: model.x * width
                 y: model.y * height
                 //color: model.color
+                onSourceChanged:
+                {
+                    console.log("SRC change ", texname, " wallstate ", model.wstate)
+                }
 
                 MouseArea {
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -170,14 +183,10 @@ Window {
                     onClicked: {
                         //model.noise = 30
                         //ctrl.update(model.x, model.y, 10, parseInt(tedit.text));
-                        if (mouse.button == Qt.LeftButton)
-                        {
-                            model.typeOfCell = selectedItem
-                            if (selectedItem == "Emitter")
-                                model.noise = parseInt(tedit.text)
-                        }
-                        else
-                            model.typeOfCell = "Air"
+                        var ifAdd = mouse.button == Qt.LeftButton
+                        if (selectedItem == "Emitter")
+                            ctrl.resetEmitter(index, ifAdd, parseInt(tedit.text))
+                        model.typeOfCell = ifAdd ? selectedItem : "Air"
                     }
                 }
                 Image {
@@ -199,6 +208,7 @@ Window {
                     text: qsTr(Math.round(noise).toString())
                     anchors.centerIn: parent
                     //anchors.fill: parent
+                    style: Text.Outline; styleColor: "black"
 
                     onTextChanged: {
                         color =  model.color

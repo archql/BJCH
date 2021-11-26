@@ -8,8 +8,8 @@
 #include "cordsystem.h"
 #include "storage.h"
 
-static const int MAX_GEN_CNT = 1;
-static const float STEP = 0.25f;
+static const int MAX_GEN_CNT = 2;
+static const float STEP = 1.0f;//0.25f;
 
 //typedef struct
 //{
@@ -51,16 +51,13 @@ public:
     Q_INVOKABLE void gen(int widht, int height);
     Q_INVOKABLE void gen(int widht, int height, QVector<QString> cell_types);
 
-    Q_INVOKABLE void update(int x,int y, int radius, int force);
+    Q_INVOKABLE void update();
+    Q_INVOKABLE void resetEmitter(int index, bool ifAdd, int force = -1);
 
     Q_INVOKABLE bool saveToFile(QString filename);
     Q_INVOKABLE bool ldFromFile(QString filename);
 
-//    Q_INVOKABLE void changeActive1();
-//    Q_INVOKABLE void changeActive2();
-//    Q_INVOKABLE void changeActive3();
-//    Q_INVOKABLE void changeActive4();
-//    int activeState;
+    void CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen);
 
     void reset_neibours();
     void raycast(float x,float y, float vx, float vy, float force, float dst, int gen, bool atWall);
@@ -104,6 +101,7 @@ signals:
 
 private:
     QList<cell*> cells;
+    QList<cell*> emitters;
     CordSystem cells_system;
     Storage storage;
 

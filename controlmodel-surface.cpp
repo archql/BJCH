@@ -10,19 +10,18 @@ ControlModel::ControlModel(QObject *parent)
 //======================================================
 void ControlModel::gen(int width, int height)
 {
-    //activeState = 1;
+    activeState = 1;
     cells_system.set(width, height);
 
     beginResetModel();
     // clear old cells
     cells.clear();
-    emitters.clear();
     // add new
     int i, x, y;
     for (i = 0; i < cells_system.maxLinear(); i++)
     {
         cells_system.toBilinear(i, x, y);
-        cells << new cell(x, y, i, this);
+        cells << new cell(x, y);
     }
 
     reset_neibours();
@@ -33,44 +32,25 @@ void ControlModel::gen(int width, int height)
 }
 void ControlModel::gen(int width, int height, QVector<QString> cell_types)
 {
-
-    //activeState = 1;
+    activeState = 1;
     cells_system.set(width, height);
-    emit ControlModel::mapReady(); // temp here to update view
 
-    qInfo("beginResetModel");
     beginResetModel();
     // clear old cells
     cells.clear();
-    emitters.clear();
     // add new
-    int i = 0, x, y;
-    for (QString celltype : cell_types)
+    int i, x, y;
+    for (i = 0; i < cells_system.maxLinear(); i++)
     {
         cells_system.toBilinear(i, x, y);
-        cells << new cell(x, y, i, celltype, this);
-        if (celltype == "Emitter")
-            emitters << cells.last();
-        i++;
+        cells << new cell(x, y, cell_types.at(i));
     }
 
-
     reset_neibours();
-    // update cells wallstate
-    for (cell *cur : cells)
-        if (cur->wallstate & 1)
-        {
-            i = 0;
-            for (cell *c : cur->rneibours())
-            {
-                if (c != nullptr)
-                    c->checkWallstate((i + 4) % 8); // do it not for all -- only for changed
-                i++;
-            }
-        }
 
-    qInfo("endResetModel");
+
     endResetModel();
+    emit ControlModel::mapReady();
 }
 void ControlModel::reset_neibours()
 {
@@ -79,6 +59,13 @@ void ControlModel::reset_neibours()
     {
         // get billinear cords of the point
         cells_system.toBilinear(i, x, y);
+//        int c0 = cells_system.toLinear(x + 1, y);
+//        int c1 = cells_system.toLinear(x    , y + 1);
+//        int c2 = cells_system.toLinear(x - 1, y);
+//        int c3 = cells_system.toLinear(x    , y - 1);
+        // this is for simpler vector neibour recognition (order 1-0-2-3)
+        /// killed
+        ///
         // its 8 neibours
         int c0 = cells_system.toLinear(x + 1, y);
         int c1 = cells_system.toLinear(x + 1, y + 1);
@@ -101,167 +88,210 @@ void ControlModel::reset_neibours()
     }
 }
 
-void ControlModel::update()
+void ControlModel::changeActive1(){
+    activeState = 1;
+}
+void ControlModel::changeActive2(){
+    activeState = 2;
+}
+void ControlModel::changeActive3(){
+    activeState = 3;
+}
+void ControlModel::changeActive4(){
+    activeState = 4;
+}
+
+void ControlModel::update(int x,int y, int radius, int force)
 {
     QDateTime start = QDateTime::currentDateTime();
 
-    for (cell *c : qAsConst(cells))
-        c->setNoise(0.f); // forceSet !! !!
+    cell *c = cells[cells_system.toLinear(x, y)];
+    if (activeState == 4)
+        c->setType("Wall3");
+    else if(activeState == 3)
+        c->setType("Wall2");
+    else if(activeState == 2)
+        c->setType("Wall1");
+    else if (activeState == 1 && (force != 0))
+    {
+        c->setType("Emitter");
+        // emit temp
+
+        for (cell *c : qAsConst(cells))
+            c->visited.clear();
 
         // =============================
         // VARIANT OF SPREAD
-     for (cell* emitter : emitters)
-     {
-         for (cell *c : qAsConst(cells))
-             c->visited.clear();
-         float step = 100. / (float)(emitter->force * emitter->force);
-         for (float a = 0; a <= 6.29; a += step)
-         {
-             raycast(emitter->x, emitter->y, STEP * sin(a), STEP * cos(a), emitter->force, 0.f, 0, false);
-             //queue.enqueue({});
-         }
-     }
+
+
+//        float step = 100. / (float)(force * force);
+//        for (float a = 0; a <= 6.29; a += step)
+//        {
+//            //raycast(x, y, STEP * sin(a), STEP * cos(a), force, 0.f, 0, false);
+//            queue.enqueue({});
+//        }
+
+
+        //====================================
+
+        //spread(c, x, y, force, 0);
+
+        // =============================
+        // VARIANT OF SPREAD
+        // get first cell
+//        cell *c = cells.at(cells_system.toLinear(x, y));
+//        // post it on queue
+//        npacket packet = {c, (float)force, 0};
+//        queue.enqueue(packet);
+
+//        while (!queue.isEmpty())
+//        {
+//            packet = queue.dequeue();
+//            c = packet.c;
+//            // check if can continue
+//            if (c == nullptr)
+//                continue;
+//            if (packet.gen > MAX_GEN_CNT)
+//                continue;
+
+//            // check if wall met
+//            // reflect
+//            if (c->reflect != -1)
+//                queue.enqueue({c, packet.force * c->reflect / 100.f, packet.gen + 1});
+//            // absorb
+//            if (c->absorb != -1) //TEMP!!!!
+//            {
+//                packet.force *= (100.f - c->absorb) / 100.f;
+//            }
+//            // get real force
+//            float dst = ((c->x - x) * (c->x - x) + (c->y - y) * (c->y - y)); //Q_rsqrt((float)(x * x + y*y));
+//            float real_force = packet.force - 3*log2f(dst) - 11.f;
+//            if (real_force < 1.f)
+//                continue;
+
+//            // add noise
+//            float noise = c->getNoise();
+//            noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * real_force));
+//            // TEMP!!!!
+//            c->setNoise(noise);
+
+//            if (c->visited.contains(packet.gen))
+//                continue;
+//            c->visited << packet.gen;
+
+//            // mk 4 packets other
+//            QVector<cell *> neibours = c->rneibours();
+//            queue.enqueue({neibours[0], packet.force, packet.gen});
+//            queue.enqueue({neibours[1], packet.force, packet.gen});
+//            queue.enqueue({neibours[2], packet.force, packet.gen});
+//            queue.enqueue({neibours[3], packet.force, packet.gen});
+//        }
+
+
+        //==============================
+
+        //float step = 0.005;// 100. / (float)(force * force);
+        //float step = 3.14f / 4.f;
+        //qInfo() << "Step is " << step;
+          //for (float a = 0; a <= 6.29; a += step)
+          //{
+        //double a = 0.75* 3.14;
+            //raycast(x, y, STEP * sin(a), STEP * cos(a), force, 0.f, 0, false);
+          //}
+        // temp
+
+        //raycastX(c, x, y, force);
+
+    }
+    // check if wallstate changed
+
 
     // update model
     QModelIndex bottomLeft = createIndex(cells_system.maxLinear(), 0);
     QModelIndex topLeft = createIndex(0, 0);
     emit dataChanged(topLeft, bottomLeft);
 
-    //qInfo() << "TEMPORALY DISABLED!";
-    qInfo() << "UPDATE RUN TOOK: " << start.msecsTo(QDateTime::currentDateTime()) << "ms";
+    qInfo() << "PHUS RUN TOOK: " << start.msecsTo(QDateTime::currentDateTime()) << "ms";
 
 }
 
-void ControlModel::resetEmitter(int index, bool ifAdd, int force)
+void swap(int *x, int *y)
 {
-    // set type already done from qml!!
-    cell *emitter = cells.at(index);
-    emitter->force = force;
-    if (ifAdd)
-    {
-        if (!emitters.contains(emitter))
-            emitters << emitter;
-    }
-    else
-        emitters.removeOne(emitter);
-    // request sim update
+
+}
+void swap(float *x, float *y)
+{
+
 }
 
-void ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen) {
+void CheckNeibors(float *x, float *y, float vx, float vy) {
     float x1 = *x, x2 = *x+vx, y1 = *y, y2 = *y+vy;
     int xb1 = round(x1), xb2 = round(x2), yb1 = round(y1), yb2 = round(y2);
-    cell *c = cells[cells_system.toLinear(xb1,yb1)];
-    QVector <cell*> neibors = c->rneibours();
-    if(!cells_system.atSystem(xb2,yb2))
-    {
-        return;
-    }
     if(xb1!=xb2 || yb2!=yb1) {
-        float k = (y1-y2)/(x2-x1);
-        float b = y1 - k*x1;
+        int k = (y1-y2)/(x2-x1);
+        int b = y1 - k*x1;
         float xang = (float)((xb2+xb1)/2);
         float yang = (float)((yb2+yb1)/2);
         float y3 = k*xang+b;
-        float x3 = (yang - b)/k;//формула исходного луча
-        //то raycast делать от координат x3 = (yang - b)/k и yang
-        //силу луча брать как force*отражение от блока, куда идём
-        //луч идёт вверх-вправо
+        if(y3>yang && vx>0 && vy<0) { //то есть если надо идти в точку вверх
 
-        if(vx>0 && vy<0) {
-            if(y3>yang && c->wallstate & 0x40) { //то есть если надо идти в точку вверх
-                raycast(x3,yang,vx,-vy,force*neibors[6]->reflect,dst+STEP ,gen+1,true);
-            }
-            else if(y3<yang && c->wallstate & 0x2) { //то есть идём вправо
-                raycast(xang,y3,-vx,vy,force*neibors[0]->reflect,dst+STEP ,gen+1,true);
-                //если это стена, raycast по углу 180 минус наш угол
-            }
         }
-        else if(vx>0 && vy>0) {
-            if(y3>yang && c->wallstate & 0x2) { //то есть если надо идти в точку вправо
-                raycast(xang,y3,-vx,vy,force*neibors[0]->reflect,dst+STEP ,gen+1,true);
-                //если это стена, raycast по углу 540 минус наш угол
-            }
-            else if(y3<yang && c->wallstate & 0x8) { //то есть если надо идти в точку вниз
-                raycast(x3,yang,vx,-vy,force*neibors[2]->reflect,dst+STEP ,gen+1,true);
-                //если это стена, raycast по углу 360 минус наш угол
-            }
-       }
-       else if(vx<0 && vy>0) {
-            if(y3>yang && c->wallstate & 0x20) { //то есть если надо идти в точку влево
-                raycast(xang,y3,-vx,vy,force*neibors[4]->reflect,dst+STEP ,gen+1,true);
-                //если это стена, raycast по углу 360 минус наш угол
-            }
-            else if(y3<yang && c->wallstate & 0x8) { //то есть если надо идти в точку вниз
-                raycast(x3,yang,vx,-vy,force*neibors[2]->reflect,dst+STEP ,gen+1,true);
-                //если это стена, raycast по углу 540 минус наш угол
-            }
-       }
-       else if(vx<0 && vy<0){
-            if(y3>yang && c->wallstate & 0x40) { //то есть если надо идти в точку вверх
-                raycast(x3,yang,vx,-vy,force*neibors[6]->reflect,dst+STEP ,gen+1,true);
-                //если это стена, raycast по углу 360 минус наш угол
-            }
-            else if(y3<yang && c->wallstate & 0x20) { //то есть если надо идти в точку влево
-                raycast(xang,y3,-vx,vy,force*neibors[4]->reflect,dst+STEP ,gen+1,true);
-                //если это стена, raycast по углу 180 минус наш угол
-            }
+        else if(y3<yang && vx>0 && vy<0) { //то есть идём вправо
+
+        }
+        else if(y3>yang && vx>0 && vy>0) { //то есть если надо идти в точку вправо
+
+        }
+        else if(y3<yang && vx>0 && vy>0) { //то есть если надо идти в точку вниз
+
+        }
+        else if(y3>yang && vx<0 && vy>0) { //то есть если надо идти в точку вправо
+
+        }
+        else if(y3<yang && vx<0 && vy>0) { //то есть если надо идти в точку вниз
+
+        }
+        else if(y3>yang && vx<0 && vy<0) { //то есть если надо идти в точку вправо
+
+        }
+        else if(y3<yang && vx<0 && vy<0) { //то есть если надо идти в точку вниз
 
         }
     }
-    else
-    { //если у нас нет казуса с углами и луч идёт прямо в стену
+    else {
+        *x = x2;
+        *y = y2;
 
-        //если следующая клетка (xb2,yb2) - стена
-        if(yb2<yb1 && c->wallstate & 0x40) { //если луч вверх идёт
-            raycast(x2,(float)((yb2+yb1)/2),vx,-vy,force*neibors[6]->reflect,dst+STEP ,gen+1,true);
-            //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
-        }
-        else if(yb2>yb1 && c->wallstate & 0x8) { //если луч вниз идёт
-            raycast(x2,(float)((yb2+yb1)/2),vx,-vy,force*neibors[2]->reflect,dst+STEP ,gen+1,true);
-            //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
-        }
-        else if(xb2<xb1 && c->wallstate & 0x20) { //если луч влево идёт
-            raycast((float)((xb2+xb1)/2),y2,-vx,vy,force*neibors[4]->reflect,dst+STEP ,gen+1,true);
-            //raycast из точки x2,y2 (пойдёт) с углом 540 минус наш угол
-        }
-        else if(xb2>xb1) { //если луч вправо идёт
-            raycast((float)((xb2+xb1)/2),y2,-vx,vy,force*neibors[0]->reflect,dst+STEP ,gen+1,true);
-            //raycast из точки x2,y2 (пойдёт) с углом 540 минус наш угол
-        }
-
-    //если стена - луч, который идёт по прежнему пути, силушку его домножить на коэф пропуска
-    //если не стена - продолжить луч по-мусульмански
     }
-
 }
 
-//void brezenhamNext(int *x, int *y, float vx, float vy)
-//{
-//    bool steep = abs(vx) > abs(vy); // Проверяем рост отрезка по оси икс и по оси игрек
-//    // Отражаем линию по диагонали, если угол наклона слишком большой
-//    if (steep)
-//    {
-//        swap(x, y); // swap cords if y axis is main
-//        swap(&vx, &vy);
-//    }
-//    // Если линия растёт не слева направо, то меняем начало и конец отрезка местами
-//    int error = vx / 2; // Здесь используется оптимизация с умножением на dx, чтобы избавиться от лишних дробей
-//    int ystep = (vy >= 0) ? 1 : -1; // Выбираем направление роста координаты y
-//    int xstep = (vx >= 0) ? 1 : -1; // Выбираем направление роста координаты y
+void brezenhamNext(int *x, int *y, float vx, float vy)
+{
+    bool steep = abs(vx) > abs(vy); // Проверяем рост отрезка по оси икс и по оси игрек
+    // Отражаем линию по диагонали, если угол наклона слишком большой
+    if (steep)
+    {
+        swap(x, y); // swap cords if y axis is main
+        swap(&vx, &vy);
+    }
+    // Если линия растёт не слева направо, то меняем начало и конец отрезка местами
+    int error = vx / 2; // Здесь используется оптимизация с умножением на dx, чтобы избавиться от лишних дробей
+    int ystep = (vy >= 0) ? 1 : -1; // Выбираем направление роста координаты y
+    int xstep = (vx >= 0) ? 1 : -1; // Выбираем направление роста координаты y
 
-//    x += xstep;
-//    error -= vy;
-//    if (error < 0)
-//    {
-//        y += ystep;
-//        error += vx;
-//    }
+    x += xstep;
+    error -= vy;
+    if (error < 0)
+    {
+        y += ystep;
+        error += vx;
+    }
 
-//    if (steep)
-//    {
-//        swap(x, y); // place cords back
-//    }
-//}
+    if (steep)
+    {
+        swap(x, y); // place cords back
+    }
+}
 
 void ControlModel::spread(cell *c, int sx, int sy, float force, int gen)
 {
@@ -452,7 +482,7 @@ void ControlModel::raycastY(cell *c, float force)
         {
             next = cells[nextCID];
             // reflect
-            if (/*!packet.atWall &&*/ next->reflect != -1)
+            if (!packet.atWall && next->reflect != -1)
             {
                 float flx = next_x - round(next_x);
                 float fly = next_y - round(next_y);
@@ -534,26 +564,29 @@ void ControlModel::raycastY(cell *c, float force)
 
 void ControlModel::raycast(float x, float y, float vx, float vy, float force, float dst, int gen, bool atWall)
 {
-    int c_index = cells_system.toLinear(round(x), round(y));
-    if (c_index == -1)
+    if (!cells_system.atSystem((int)round(x), (int)round(y)))
         return;
     if (gen > MAX_GEN_CNT)
         return;
     float real_force = force;
     if (dst > 0.1f)
         real_force = force - 6*log2f(dst) - 11.f;
+    int max_x, max_y;
 
     while (real_force > 1.f)
     {
         // get cur cell
-        c_index = cells_system.toLinear(round(x), round(y));
-        if (c_index == -1)
-            break;
-        cell *c = cells[c_index];
+        cell *c = cells[cells_system.toLinear(round(x), round(y))];
         // if we hit a wall
-        if (c->wallstate != 0) //TEMP!!!!
+        if (c->reflect != -1 && !atWall) //TEMP!!!!
         {
-            CheckNeibors(&x, &y, vx, vy, force, dst, gen);
+            float fl_x = x - round(x);
+            float fl_y = y - round(y);
+            float sgn = (vx - fl_x + vy - fl_y) * (-vx + fl_x + vy - fl_y); // idea is get sgn of dot product between sum of speed and (fl_x, fl_y) vectors and different axiles vectors (x and y)
+            if (sgn >= 0.f) // Y axis
+                raycast( round(x) + vx - fl_x,  y, vx, -vy, force * c->reflect / 100.f, dst + STEP, gen + 1, true);
+            if (sgn <= 0.f) // X axis
+                raycast( x,  round(y) + vy - fl_y, -vx, vy, force * c->reflect / 100.f, dst + STEP, gen + 1, true);
         }
         atWall = c->absorb != -1;
         if (atWall) // TEMP!!!!
@@ -561,8 +594,21 @@ void ControlModel::raycast(float x, float y, float vx, float vy, float force, fl
             //qInfo() << "hit a wall ";
             force *= (100.f - c->absorb) / 100.f;
         }
+        // if we went out of field
+        if (!cells_system.atSystem(x, y)) // point
+        {
+            break; // kill
+            //qInfo() << "went out of field ";
+            cells_system.get(max_x, max_y);
+            if (x + vx < 0 || x + vx >= max_x)
+                vx = -vx;
+            if (y + vy < 0 || y + vy >= max_y)
+                vy = -vy;
+            raycast(x + vx, y + vy, vx, vy, force, dst + STEP, gen + 1, false);
+            break; // kill cur ray
+        }
         // add force to cell
-        if ((!c->visited.contains(gen) || gen != 0) && gen >= 1)
+        if ((!c->visited.contains(gen) || gen != 0) && gen >= 0)
         {
             //qInfo() << "cur: X "<< x << " Y " << y<< " vx " << vx<< " vy " << vy<< " rf " << real_force<< " gen " << gen << " cell " << c->getType() << " dst " << dst;
             float noise = c->getNoise();
@@ -598,7 +644,7 @@ bool ControlModel::saveToFile(QString filename)
     // save points
     for (const cell *c : qAsConst(cells))
     {
-        data.append(c->getType() /*+ ',' + QString(c->locked) + ','*/);
+        data.append(c->getType());
     }
     return storage.saveToFile(filename, data);
 }
@@ -643,7 +689,6 @@ QVariant ControlModel::data(const QModelIndex &index, int role) const
         case noise_role: return QVariant(cur->getNoise());
         case color_role: return QVariant(cur->color);
         case wstate_role: return QVariant(cur->wallstate);
-        case stype_role: return QVariant(cur->getType());
     }
     return QVariant();
 }
@@ -655,12 +700,11 @@ bool ControlModel::setData(const QModelIndex &index, const QVariant &value, int 
         cell *cur = cells.at(index.row());
         switch (role)
         {
-        case x_role: cur->x = value.toInt(); break;
-        case y_role: cur->y = value.toInt(); break;
-        case noise_role: cur->setNoise(value.toFloat()); break;
-        case color_role: cur->color = QColor(value.toInt()); break;
-        case wstate_role: cur->wallstate = value.toInt(); break;
-        case stype_role: cur->setType(value.toString()); break;
+            case x_role: cur->x = value.toInt();
+            case y_role: cur->y = value.toInt();
+            case noise_role: cur->setNoise(value.toFloat());
+            case color_role: cur->color = QColor(value.toInt());
+            case wstate_role: cur->wallstate = value.toInt();
         }
 
         emit dataChanged(index, index, QVector<int>() << role);
@@ -703,7 +747,6 @@ QHash<int, QByteArray> ControlModel::roleNames() const
     names[noise_role] = "noise";
     names[color_role] = "color";
     names[wstate_role] = "wstate";
-    names[stype_role] = "typeOfCell";
     return names;
 }
 

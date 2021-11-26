@@ -44,11 +44,17 @@ void cell::setNoise(const float noise)
     color = getNoiseColor();
     qInfo() << "color " << color;
 }
+
+void cell::forceSetNoise(const float noise)
+{
+    this->noise = noise;
+}
 void cell::setType(const QString cellType)
 {
     typeOfCell = cellType;
-    color = getNoiseColor();
+    //color = getNoiseColor();
     // do some processing
+    // IF NEW ELEMENT IS EMITTER YOU NEED TO CALL RESET EMITTER FROM MODEL!
     if (typeOfCell == "Wall1") {
         absorb = 10;
         reflect = 90;
@@ -78,12 +84,12 @@ void cell::setType(const QString cellType)
         wallstate ^= 1;
     }
     // temporaly
+    qInfo() << "Wallstate check!";
     auto model = dynamic_cast<ControlModel*>(parent());
     if (model)
     {
         emit model->cellChanged(this);
     }
-    qInfo() << "Wallstate check!";
 }
 
 void cell::checkWallstate(const int index)

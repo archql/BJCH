@@ -19,6 +19,7 @@ public:
     ~cell();
 
     void setNoise(const float noise);
+    void forceSetNoise(const float noise); // used to reset value wout any updates
     void setType(const QString cellType);
 
     void checkWallstate(const int index);
@@ -37,6 +38,9 @@ public:
     int absorb;
     int reflect;
     int wallstate;
+    bool locked;
+
+    int force;
 
     QString texture;
 	
