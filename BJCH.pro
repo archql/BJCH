@@ -13,11 +13,15 @@ SOURCES += \
     controlmodel.cpp \
     cordsystem.cpp \
     main.cpp \
+    storage.cpp \
+    task.cpp
 
 HEADERS += \
     cell.h \
     controlmodel.h \
-    cordsystem.h
+    cordsystem.h \
+    storage.h \
+    task.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -25,6 +29,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
+    Console.qml \
     main.qml
 
 RESOURCES += \

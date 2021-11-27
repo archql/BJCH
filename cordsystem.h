@@ -23,6 +23,9 @@ public:
     void toSystem(int &x, int &y);//ret coords In SYSTEM! (nonrelative to min)
     void toSystem(QPointF &p);//ret coords In SYSTEM! (nonrelative to min)
 
+    bool atSystem(const int x, const int y);
+    bool atSystem(const float x, const float y);
+
     int toLinear(const int x,const int y);//input nonrelative
     void toBilinear(const int i,int &x,int &y);//i is relative (from 0), other -- no
 

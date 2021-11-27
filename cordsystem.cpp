@@ -56,19 +56,25 @@ void CordSystem::toSystem(double &x,double &y)
 }
 void CordSystem::toSystem(int &x,int &y)
 {
-    if (x >= max_x || x < min_x || y >= max_y || y < min_y)
-        qInfo()<<"BAD1 "<< x << " "<< y;
-    if(x >= max_x)
-        x = 2 * max_x - x - 1; // min_x min y isnt supported!
-    else if(x < min_x)
-        x = 2* min_x - x;
-    if(y >= max_y)
-        y = 2 * max_y - y - 1;
-    else if(y < min_y)
-        y = 2* min_y - y;
-    if (x >= max_x || x < min_x || y >= max_y || y < min_y)
-        qInfo()<<"BAD2 "<< x << " "<< y;
-
+    while (!atSystem(x, y))
+    {
+        if(x >= max_x)
+            x = 2 * max_x - x - 1; // min_x min y isnt supported!
+        else if(x < min_x)
+            x = 2* min_x - x;
+        if(y >= max_y)
+            y = 2 * max_y - y - 1;
+        else if(y < min_y)
+            y = 2* min_y - y;
+    }
+}
+bool CordSystem::atSystem(const int x, const int y)
+{
+    return (x < max_x && x >= min_x && y < max_y && y >= min_y);
+}
+bool CordSystem::atSystem(const float x, const float y)
+{
+    return (x < max_x && x >= min_x && y < max_y && y >= min_y);
 }
 
 void CordSystem::toSystem(QPointF &p)
@@ -78,8 +84,10 @@ void CordSystem::toSystem(QPointF &p)
 
 int CordSystem::toLinear(int x, int y)
 {
-    toSystem(x,y);
-    return (y-min_y)*(max_x-min_x)+ x-min_x;
+    if (atSystem(x, y))
+        return (y-min_y)*(max_x-min_x)+ x-min_x;
+   else
+        return -1;
 }
 void CordSystem::toBilinear(const int i, int &x, int &y)
 {
