@@ -214,11 +214,23 @@ Window {
                     selectedItem = "Workplace"
                 }
             }
+            Button {
+                text: "ToggleLock"
+                visible: admin_access
+                onClicked: {
+                    selectedItem = "LOCKED"
+                }
+            }
 
             CheckBox
             {
                 id: chooseOverlay
                 text: "switch noise overlay"
+            }
+            CheckBox
+            {
+                id: chooseLock
+                text: "switch lock overlay"
             }
 
             TextField {
@@ -329,6 +341,16 @@ Window {
                         onClicked: {
                             //model.noise = 30
                             //ctrl.update(model.x, model.y, 10, parseInt(tedit.text));
+                            if (!admin_access && model.locked)
+                            {
+                                myconsole.message("cell at " + Number(index) + " is locked!", "red")
+                                return
+                            }
+                            if (selectedItem == "LOCKED")
+                            {
+                                model.locked ^= 1
+                                return
+                            }
                             var ifAdd = mouse.button == Qt.LeftButton
                             if (selectedItem == "Emitter")
                                 ctrl.resetEmitter(index, ifAdd, parseInt(tedit.text))
@@ -345,6 +367,13 @@ Window {
                         onSourceChanged: {
                             //console.log("BBB ")
                         }
+                    }
+                    Image {
+                        id: texture_locked
+                        anchors.fill: parent
+                        source: "sources/textures/lock.png"
+                        visible: model.locked & chooseLock.checked
+                        cache: true
                     }
                     Text {
                         id: name

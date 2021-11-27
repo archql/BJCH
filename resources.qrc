@@ -52,5 +52,6 @@
         <file>sources/textures/tex_Wall3.png</file>
         <file>sources/textures/tex_Wall4.png</file>
         <file>Console.qml</file>
+        <file>sources/textures/lock.png</file>
     </qresource>
 </RCC>

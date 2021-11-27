@@ -111,7 +111,8 @@ public:
         noise_role,
         color_role,
         wstate_role,
-        stype_role
+        stype_role,
+        locked_role
     };
     virtual QHash<int, QByteArray> roleNames() const override;
 

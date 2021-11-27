@@ -15,7 +15,7 @@ class cell : public QObject
 public:
     explicit cell(QObject *parent = nullptr);
     cell(int x, int y, int index, QObject *parent = nullptr);
-    cell(int x, int y, int index, QString cellType, QObject *parent = nullptr);
+    cell(int x, int y, int index, QString cellType, bool locked, QObject *parent = nullptr);
     ~cell();
 
     void setNoise(const float noise);
@@ -53,6 +53,7 @@ public:
     Q_PROPERTY(int absorb MEMBER absorb)
     Q_PROPERTY(int reflect MEMBER reflect)
     Q_PROPERTY(int wstate MEMBER wallstate)
+    Q_PROPERTY(int locked MEMBER locked)
     QColor getNoiseColor();
 
 private:

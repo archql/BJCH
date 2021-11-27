@@ -693,8 +693,7 @@ bool ControlModel::ldFromFile(QString filename)
         *datastream >> key >> locked >> force;
 
         cells_system.toBilinear(i, x, y);
-        cells << new cell(x, y, i, CELL_TYPES.key(key), this);
-        cells.last()->locked = locked;
+        cells << new cell(x, y, i, CELL_TYPES.key(key), locked, this);
         cells.last()->force = force;
         if (cells.last()->getType() == "Emitter")
             emitters << cells.last();
@@ -776,6 +775,7 @@ QVariant ControlModel::data(const QModelIndex &index, int role) const
         case color_role: return QVariant(cur->color);
         case wstate_role: return QVariant(cur->wallstate);
         case stype_role: return QVariant(cur->getType());
+        case locked_role: return QVariant(cur->locked);
     }
     return QVariant();
 }
@@ -793,6 +793,7 @@ bool ControlModel::setData(const QModelIndex &index, const QVariant &value, int 
         case color_role: cur->color = QColor(value.toInt()); break;
         case wstate_role: cur->wallstate = value.toInt(); break;
         case stype_role: cur->setType(value.toString()); break;
+        case locked_role: cur->locked = value.toBool(); break;
         }
 
         emit dataChanged(index, index, QVector<int>() << role);
@@ -836,6 +837,7 @@ QHash<int, QByteArray> ControlModel::roleNames() const
     names[color_role] = "color";
     names[wstate_role] = "wstate";
     names[stype_role] = "typeOfCell";
+    names[locked_role] = "locked";
     return names;
 }
 

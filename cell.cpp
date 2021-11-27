@@ -10,6 +10,7 @@ cell::cell(int x, int y, int index, QObject *parent) : QObject(parent)
 {
     Neibours.fill(nullptr, 8);
 
+    locked = false;
     wallstate = 0;
     force = -1;
     this->x = x;
@@ -20,10 +21,11 @@ cell::cell(int x, int y, int index, QObject *parent) : QObject(parent)
     color = getNoiseColor();
 }
 
-cell::cell(int x, int y, int index, QString cellType, QObject *parent) : QObject(parent)
+cell::cell(int x, int y, int index, QString cellType, bool locked, QObject *parent) : QObject(parent)
 {
     Neibours.fill(nullptr, 8);
 
+    this->locked = locked;
     wallstate = 0;
     force = -1;
     this->x = x;

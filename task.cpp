@@ -21,8 +21,7 @@ task::~task()
 QString task::getDescription()
 {
     return ID_DESCRIPTION_A[id & 0xF0] + (argument ? QString::number(argument) : "") + " "
-            + ID_DESCRIPTION_B[id & 0x0F] + " " + QString::number(cur) +
-                                                 "/" + QString::number(tgt);
+            + QString::number(cur) + "/" + QString::number(tgt) + " " + ID_DESCRIPTION_B[id & 0x0F];
 }
 
 void task::reset()
