@@ -7,12 +7,16 @@
 #include <QDir>
 #include <QTextStream>
 #include <QDebug>
+#include <QDataStream>
 
 class Storage
 {
 public:
     Storage();
     Storage(const QString extension, const QString directoty = "");
+
+    QDataStream *openDataStream(QString filename, QFile **file) const;
+    void closeDataStream(QDataStream *datastream);
 
     QVector<QString> loadFromFile(QString filename);
     bool saveToFile(QString filename, QVector<QString> data);

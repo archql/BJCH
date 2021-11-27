@@ -11,6 +11,7 @@
 int main(int argc, char *argv[])
 {
     qmlRegisterType<cell>("cell", 1, 0, "Cell");
+    qmlRegisterType<task>("task", 1, 0, "Task");
     qmlRegisterType<ControlModel>("controlmodel", 1, 0, "Control");
 
     //auto date = QDateTime::currentDateTime();

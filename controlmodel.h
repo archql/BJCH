@@ -4,12 +4,24 @@
 #include <QAbstractListModel>
 #include <QDateTime>
 #include <QQueue>
+#include <QQmlListProperty>
 #include "cell.h"
 #include "cordsystem.h"
 #include "storage.h"
+#include "task.h"
 
+static const qint16 FILE_HEADER = 0xF08A;
+static const qint16 FILE_HEADER_LVL = 0xF082;
 static const int MAX_GEN_CNT = 2;
 static const float STEP = 1.0f;//0.25f;
+
+static const QHash<QString, qint8> CELL_TYPES = {{"Air", 0x55},
+                                                 {"Emitter", 0x28},
+                                                 {"Workplace", 0x71},
+                                                 {"Wall1", 0xA0},
+                                                 {"Wall2", 0xA1},
+                                                 {"Wall3", 0xA2},
+                                                 {"Wall4", 0xA3}};
 
 //typedef struct
 //{
@@ -20,7 +32,6 @@ static const float STEP = 1.0f;//0.25f;
 
 typedef struct
 {
-    cell *c;
     float force;
     int gen;
     float x, y, vx, vy;
@@ -51,17 +62,26 @@ public:
     Q_INVOKABLE void gen(int widht, int height);
     Q_INVOKABLE void gen(int widht, int height, QVector<QString> cell_types);
 
-    Q_INVOKABLE void update();
+    Q_INVOKABLE int update();
     Q_INVOKABLE void resetEmitter(int index, bool ifAdd, int force = -1);
+
+    Q_INVOKABLE bool loadTask(QString taskname);
+    Q_INVOKABLE bool parseTasks(QString taskname);
+    QQmlListProperty<task>getTasks();
+    Q_INVOKABLE void checkCurTasks();
 
     Q_INVOKABLE bool saveToFile(QString filename);
     Q_INVOKABLE bool ldFromFile(QString filename);
+
+    Q_INVOKABLE bool requestAdminKey();
+
+    Q_PROPERTY(QQmlListProperty<task> tasks READ getTasks)
 
     void CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen);
 
     void reset_neibours();
     void raycast(float x,float y, float vx, float vy, float force, float dst, int gen, bool atWall);
-    void raycastX(cell *c, float sx, float sy, float force);
+    void raycastX(cell *c);
     void raycastY(cell *cd, float force);
 
     void spread(cell *c, int sx, int sy, float force, int gen);
@@ -100,6 +120,7 @@ signals:
     void cellChanged(cell *c);
 
 private:
+    QList<task*> tasks;
     QList<cell*> cells;
     QList<cell*> emitters;
     CordSystem cells_system;

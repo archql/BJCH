@@ -10,7 +10,6 @@ ControlModel::ControlModel(QObject *parent)
 //======================================================
 void ControlModel::gen(int width, int height)
 {
-    //activeState = 1;
     cells_system.set(width, height);
 
     beginResetModel();
@@ -33,44 +32,44 @@ void ControlModel::gen(int width, int height)
 }
 void ControlModel::gen(int width, int height, QVector<QString> cell_types)
 {
+    qInfo()<<"DISABLED!";
+//    //activeState = 1;
+//    cells_system.set(width, height);
+//    emit ControlModel::mapReady(); // temp here to update view
 
-    //activeState = 1;
-    cells_system.set(width, height);
-    emit ControlModel::mapReady(); // temp here to update view
-
-    qInfo("beginResetModel");
-    beginResetModel();
-    // clear old cells
-    cells.clear();
-    emitters.clear();
-    // add new
-    int i = 0, x, y;
-    for (QString celltype : cell_types)
-    {
-        cells_system.toBilinear(i, x, y);
-        cells << new cell(x, y, i, celltype, this);
-        if (celltype == "Emitter")
-            emitters << cells.last();
-        i++;
-    }
+//    qInfo("beginResetModel");
+//    beginResetModel();
+//    // clear old cells
+//    cells.clear();
+//    emitters.clear();
+//    // add new
+//    int i = 0, x, y;
+//    for (QString celltype : cell_types)
+//    {
+//        cells_system.toBilinear(i, x, y);
+//        cells << new cell(x, y, i, celltype, this);
+//        if (celltype == "Emitter")
+//            emitters << cells.last();
+//        i++;
+//    }
 
 
-    reset_neibours();
-    // update cells wallstate
-    for (cell *cur : cells)
-        if (cur->wallstate & 1)
-        {
-            i = 0;
-            for (cell *c : cur->rneibours())
-            {
-                if (c != nullptr)
-                    c->checkWallstate((i + 4) % 8); // do it not for all -- only for changed
-                i++;
-            }
-        }
+//    reset_neibours();
+//    // update cells wallstate
+//    for (cell *cur : cells)
+//        if (cur->wallstate & 1)
+//        {
+//            i = 0;
+//            for (cell *c : cur->rneibours())
+//            {
+//                if (c != nullptr)
+//                    c->checkWallstate((i + 4) % 8); // do it not for all -- only for changed
+//                i++;
+//            }
+//        }
 
-    qInfo("endResetModel");
-    endResetModel();
+//    qInfo("endResetModel");
+//    endResetModel();
 }
 void ControlModel::reset_neibours()
 {
@@ -101,7 +100,7 @@ void ControlModel::reset_neibours()
     }
 }
 
-void ControlModel::update()
+int ControlModel::update()
 {
     QDateTime start = QDateTime::currentDateTime();
 
@@ -114,12 +113,13 @@ void ControlModel::update()
      {
          for (cell *c : qAsConst(cells))
              c->visited.clear();
-         float step = 100. / (float)(emitter->force * emitter->force);
-         for (float a = 0; a <= 6.29; a += step)
-         {
-             raycast(emitter->x, emitter->y, STEP * sin(a), STEP * cos(a), emitter->force, 0.f, 0, false);
-             //queue.enqueue({});
-         }
+//         float step = 20. / (float)(emitter->force * emitter->force);
+//         for (float a = 0; a <= 6.29; a += step)
+//         {
+//             raycast(emitter->x, emitter->y, STEP * sin(a), STEP * cos(a), emitter->force, 0.f, 0, false);
+//             //queue.enqueue({});
+//         }
+         raycastX(emitter);
      }
 
     // update model
@@ -129,6 +129,7 @@ void ControlModel::update()
 
     //qInfo() << "TEMPORALY DISABLED!";
     qInfo() << "UPDATE RUN TOOK: " << start.msecsTo(QDateTime::currentDateTime()) << "ms";
+    return start.msecsTo(QDateTime::currentDateTime());
 
 }
 
@@ -150,12 +151,14 @@ void ControlModel::resetEmitter(int index, bool ifAdd, int force)
 void ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen) {
     float x1 = *x, x2 = *x+vx, y1 = *y, y2 = *y+vy;
     int xb1 = round(x1), xb2 = round(x2), yb1 = round(y1), yb2 = round(y2);
-    cell *c = cells[cells_system.toLinear(xb1,yb1)];
-    QVector <cell*> neibors = c->rneibours();
     if(!cells_system.atSystem(xb2,yb2))
     {
         return;
     }
+
+    cell *c = cells[cells_system.toLinear(xb1,yb1)];
+    QVector <cell*> neibors = c->rneibours();
+
     if(xb1!=xb2 || yb2!=yb1) {
         float k = (y1-y2)/(x2-x1);
         float b = y1 - k*x1;
@@ -319,97 +322,61 @@ void ControlModel::spread(cell *c, int sx, int sy, float force, int gen)
     // reflections
 }
 
-void ControlModel::raycastX(cell *c, float sx, float sy, float force)
+void ControlModel::raycastX(cell *c)
 {
+    /// GEN 2 LO bytes is actual gen, HI bytes -- amount of ticks
+
     // add force to first cell
     float noise = c->getNoise();
-    noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * force));
-    // TEMP!!!!
+    noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * c->force));
     c->setNoise(noise);
     // set it as visited
     c->visited << 0;
 
     // - loop for 360 dgs
     // - do:
-    //float step = 100. / (float)(force * force);
-    float step = 3.14f / 4.f;
+    float step = 20. / (float)(c->force * c->force);
+    //float step = 3.14f / 4.f;
     for (float a = 0; a <= 6.29; a += step) // post point to queue with x y vx vy
-        queue.enqueue({c, (float)force, 0, sx, sy, STEP * sinf(a), STEP * cosf(a)});
+        queue.enqueue({(float)c->force, 0, (float)c->x, (float)c->y, STEP * sinf(a), STEP * cosf(a)});
 
-    npacket packet; cell *next;
+    npacket packet; int c_index; bool atWall;
     while (!queue.isEmpty())
     {
         packet = queue.dequeue();
-        c = packet.c;
-        if (c == nullptr)
+        if ((packet.gen & 0xFFFF) > MAX_GEN_CNT)
             continue;
-        if (packet.gen > MAX_GEN_CNT)
+        // get cur cell
+        c_index = cells_system.toLinear(round(packet.x), round(packet.y));
+        if (c_index == -1)
             continue;
+        cell *c = cells[c_index];
 
-
-        if ((packet.x - c->x) > 0.5 || (packet.y - c->y) > 0.5) // there is an error
+        float dst = (packet.gen >> 16) * STEP;
+        // if we hit a wall
+        atWall = c->wallstate & 1;
+        if (atWall) //TEMP!!!!
         {
-            // next?
-            // reflect?
+            // check reflection
+            CheckNeibors(&packet.x, &packet.y, packet.vx, packet.vy, packet.force, dst, packet.gen);
+            // absorbtion
+            packet.force *= (100.f - c->absorb) / 100.f;
         }
-            // get next cell
-            float fl_x = packet.x - c->x;
-            float fl_y = packet.y - c->y;
-            int num = 2*((packet.vx + fl_x + packet.vy + fl_y) < 0) + ((-packet.vx - fl_x + packet.vy + fl_y) < 0);
-            next = c->rneibours()[num];
-            // check if neibour_next <> real_next
-            if (abs(c->x + packet.vx - next->x) > 0.5f || abs(c->x + packet.vx - next->x) > 0.5f)
-
-            if (abs(fl_x) > 0.5 || abs(fl_y) > 0.5)
-            {
-                quick_exit(-1);
-            }
-
-            //check if wall met
-            // reflect
-            if (next != nullptr && next->reflect != -1)
-            {
-                int tmp;
-                if ((num ^ 3) == 0) // reflect v by X axis
-                {
-                    tmp = cells_system.toLinear(round(c->x - fl_x), c->y);
-                    queue.enqueue({tmp != -1 ? cells.at(tmp) : nullptr, (float)force * c->reflect / 100.f, packet.gen + 1,
-                                   c->x - fl_x, packet.y, packet.vx, -packet.vy});
-                }
-                else                // reflect v by Y axis
-                {
-                    tmp = cells_system.toLinear(c->x, round(c->y - fl_y));
-                    queue.enqueue({tmp != -1 ? cells.at(tmp) : nullptr, (float)force * c->reflect / 100.f, packet.gen + 1,
-                                   packet.x, c->y - fl_y, -packet.vx, packet.vy});
-                }
-            }
-
-            // absorb
-            if (c->absorb != -1) //TEMP!!!!
-            {
-                packet.force *= (100.f - c->absorb) / 100.f;
-            }
-            // get real force
-            float dst = ((c->x - sx) * (c->x - sx) + (c->y - sy) * (c->y - sy)); //Q_rsqrt((float)(x * x + y*y));
-            float real_force = packet.force - 3*log2f(dst) - 11.f;
-            if (real_force < 1.f)
-                continue;
-
-            // apply force
-            if (!c->visited.contains(packet.gen) && packet.gen >= 1)
-            {
-                float noise = c->getNoise();
-                noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * real_force));
-                // TEMP!!!!
-                c->setNoise(noise);
-                c->visited << packet.gen;
-            }
-
+        // add force to cell
+        if (!c->visited.contains((packet.gen & 0xFFFF)) && (packet.gen & 0xFFFF) >= 0)
+        {
+            float noise = c->getNoise();
+            float real_force = packet.force - 6*log2f(dst) - 11.f;
+            noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * real_force));//sqrt((c->noise * c->noise) + (force*force));//+= force;
+            c->setNoise(noise);
+            c->visited << (packet.gen & 0xFFFF);
+        }
+        // mov point
 
         // post next point to queue (with own x, y, vx, vy, force, gen)
         packet.x += packet.vx;
         packet.y += packet.vy;
-        queue.enqueue({next, packet.force, packet.gen,
+        queue.enqueue({packet.force, packet.gen + (1 << 16),
                        packet.x, packet.y, packet.vx, packet.vy});
     }
 
@@ -431,7 +398,7 @@ void ControlModel::raycastY(cell *c, float force)
     // - do:
     float step = 100. / (float)(force * force);
     for (float a = 0; a <= 6.29; a += step) // post point to queue with x y vx vy
-        queue.enqueue({c, (float)force, 0, (float)c->x, (float)c->y, STEP * sinf(a), STEP * cosf(a)});
+        queue.enqueue({(float)force, 0, (float)c->x, (float)c->y, STEP * sinf(a), STEP * cosf(a)});
 
     npacket packet; cell *next, *cur, *reflto;
     while (!queue.isEmpty())
@@ -440,7 +407,7 @@ void ControlModel::raycastY(cell *c, float force)
         if (packet.gen > MAX_GEN_CNT)
             continue;
 
-        cur = packet.c;
+        //cur = packet.c;
         if (cur == nullptr)
             continue;
 
@@ -526,7 +493,7 @@ void ControlModel::raycastY(cell *c, float force)
             continue;
         packet.x = next_x;
         packet.y = next_y;
-        queue.enqueue({next, packet.force, packet.gen,
+        queue.enqueue({/*next,*/ packet.force, packet.gen,
                        packet.x, packet.y, packet.vx, packet.vy});
     }
 }
@@ -537,7 +504,7 @@ void ControlModel::raycast(float x, float y, float vx, float vy, float force, fl
     int c_index = cells_system.toLinear(round(x), round(y));
     if (c_index == -1)
         return;
-    if (gen > MAX_GEN_CNT)
+    if ((gen & 0xFFFF) > MAX_GEN_CNT)
         return;
     float real_force = force;
     if (dst > 0.1f)
@@ -562,14 +529,11 @@ void ControlModel::raycast(float x, float y, float vx, float vy, float force, fl
             force *= (100.f - c->absorb) / 100.f;
         }
         // add force to cell
-        if ((!c->visited.contains(gen) || gen != 0) && gen >= 1)
+        if ((!c->visited.contains(gen) || gen != 0) && gen >= 0)
         {
-            //qInfo() << "cur: X "<< x << " Y " << y<< " vx " << vx<< " vy " << vy<< " rf " << real_force<< " gen " << gen << " cell " << c->getType() << " dst " << dst;
             float noise = c->getNoise();
             noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * real_force));//sqrt((c->noise * c->noise) + (force*force));//+= force;
-            // TEMP!!!!
-            c->setNoise(noise);
-            // TEMP!!!!
+            c->setNoise(noise); // TEMP!!!!
             c->visited << gen;
         }
         // mov point
@@ -585,36 +549,204 @@ void ControlModel::raycast(float x, float y, float vx, float vy, float force, fl
 }
 
 
+bool ControlModel::loadTask(QString taskname)
+{
+    tasks.clear();
+    QFile *taskfile;
+    QDataStream *datastream = storage.openDataStream(taskname, &taskfile);
+    if (datastream == nullptr)
+        return false;
+
+    qint16 header;
+    *datastream >> header;
+    if (header != FILE_HEADER)
+        return false;
+
+    qint32 nTasks;
+    *datastream >> nTasks; // read amount of tasks
+
+    qint8 id; qint32 tgt, arg;
+    for (int i = 0; i < nTasks; i++)
+    {
+        *datastream >> id >> tgt >> arg;
+        tasks.append(new task(id, tgt, arg));
+    }
+    return ldFromFile(taskname + "_lvl");
+}
+
+bool ControlModel::parseTasks(QString taskname)
+{
+    tasks.clear();
+    // read tsks data
+    QVector<QString> data = storage.loadFromFile(taskname + ".raw");
+    if (data.isEmpty())
+        return false;
+
+    // convert it to tsks
+    for (QString dstr : data)
+    {
+        if (dstr.startsWith('#'))
+            continue;
+        QStringList splitted = dstr.split(',');
+        if (splitted.length() != 4)
+            continue;
+        qint8 id = ((qint8)(splitted[0].toInt()) << 4) | (qint8)splitted[1].toInt();
+        qint32 tgt = (qint32)splitted[2].toInt(), arg = (qint32)splitted[3].toInt();;
+        tasks.append(new task(id, tgt, arg));
+    }
+
+    // write a file
+    QFile *taskfile;
+    QDataStream *datastream = storage.openDataStream(taskname, &taskfile);
+    if (datastream == nullptr)
+        return false;
+
+    *datastream << (qint16)FILE_HEADER;
+    *datastream << (qint32)tasks.length();
+    for (task *t : tasks)
+    {
+        *datastream << t->id << t->tgt << t->argument;
+    }
+
+    taskfile->flush();
+    taskfile->close();
+    return true;
+}
+
+QQmlListProperty<task> ControlModel::getTasks()
+{
+    return QQmlListProperty<task>(this, &tasks);
+}
+
+void ControlModel::checkCurTasks()
+{
+    for (task *t : tasks)
+        t->reset();
+    for (cell* c : cells)
+        for (task *t : tasks)
+            t->check(c);
+}
+
 bool ControlModel::saveToFile(QString filename)
 {
     // get cur fld sz
     int width, height;
     cells_system.get(width, height);
 
-    QVector<QString> data = QVector<QString>();
-    // save cur sz
-    data.append(QString::number(width));
-    data.append(QString::number(height));
-    // save points
+    QFile *curfile;
+    QDataStream *datastream = storage.openDataStream(filename, (&curfile));
+    bool result = datastream != nullptr;
+    if (!result)
+        return result;
+
+    *datastream << FILE_HEADER_LVL;
+    *datastream << width << height;
     for (const cell *c : qAsConst(cells))
-    {
-        data.append(c->getType() /*+ ',' + QString(c->locked) + ','*/);
-    }
-    return storage.saveToFile(filename, data);
+        *datastream << CELL_TYPES[c->getType()] << (qint8)c->locked << (qint32)c->force;
+
+    curfile->flush();
+    curfile->close();
+    return result;
+
+
+//    QVector<QString> data = QVector<QString>();
+//    // save cur sz
+//    data.append(QString::number(width));
+//    data.append(QString::number(height));
+//    // save points
+//    for (const cell *c : qAsConst(cells))
+//    {
+//        data.append(c->getType() /*+ ',' + QString(c->locked) + ','*/);
+//    }
+//    return storage.saveToFile(filename, data);
 }
 bool ControlModel::ldFromFile(QString filename)
 {
-    // get data
-    QVector<QString> data = storage.loadFromFile(filename);
-    if (data.isEmpty())
+    QFile *curfile;
+    QDataStream *datastream = storage.openDataStream(filename, &curfile);
+    bool result = datastream != nullptr;
+    if (!result)
+        return result;
+
+    qint16 header;
+    *datastream >> header;
+    if (header != FILE_HEADER_LVL)
         return false;
 
-    // get fld sz
-    int width = data.takeFirst().toInt();
-    int height = data.takeFirst().toInt();
-    gen(width, height, data);
+    // get cur fld sz
+    int width, height;
+    *datastream >> width >> height;
 
-    return true;
+    // ld cell data
+    cells_system.set(width, height);
+    emit ControlModel::mapReady(); // temp here to update view
+
+    qInfo("beginResetModel");
+    beginResetModel();
+    // clear old cells
+    cells.clear();
+    emitters.clear();
+    // add new
+    int i, x, y; qint8 key; qint8 locked; qint32 force;
+    for (i = 0; i < cells_system.maxLinear(); i++)
+    {
+        *datastream >> key >> locked >> force;
+
+        cells_system.toBilinear(i, x, y);
+        cells << new cell(x, y, i, CELL_TYPES.key(key), this);
+        cells.last()->locked = locked;
+        cells.last()->force = force;
+        if (cells.last()->getType() == "Emitter")
+            emitters << cells.last();
+    }
+
+
+    reset_neibours();
+    // update cells wallstate
+    for (cell *cur : cells)
+        if (cur->wallstate & 1)
+        {
+            i = 0;
+            for (cell *c : cur->rneibours())
+            {
+                if (c != nullptr)
+                    c->checkWallstate((i + 4) % 8); // do it not for all -- only for changed
+                i++;
+            }
+        }
+
+    qInfo("endResetModel");
+    endResetModel();
+
+    curfile->close();
+    return result;
+    // get data
+//    QVector<QString> data = storage.loadFromFile(filename);
+//    if (data.isEmpty())
+//        return false;
+
+//    // get fld sz
+//    int width = data.takeFirst().toInt();
+//    int height = data.takeFirst().toInt();
+//    gen(width, height, data);
+
+    //    return true;
+}
+
+bool ControlModel::requestAdminKey()
+{
+    QFile *taskfile;
+    QDataStream *datastream = storage.openDataStream("license.lic", &taskfile);
+    if (datastream == nullptr)
+        return false;
+
+    qint16 header, control = 0xFFFF;
+    while (!datastream->atEnd())
+    {
+        *datastream >> header;
+        control ^= header;
+    }
+    return !(control ^ 0x7B33);
 }
 
 //========================================================

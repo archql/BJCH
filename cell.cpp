@@ -11,6 +11,7 @@ cell::cell(int x, int y, int index, QObject *parent) : QObject(parent)
     Neibours.fill(nullptr, 8);
 
     wallstate = 0;
+    force = -1;
     this->x = x;
     this->y = y;
     this->index = index;
@@ -24,6 +25,7 @@ cell::cell(int x, int y, int index, QString cellType, QObject *parent) : QObject
     Neibours.fill(nullptr, 8);
 
     wallstate = 0;
+    force = -1;
     this->x = x;
     this->y = y;
     this->index = index;

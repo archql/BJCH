@@ -16,6 +16,26 @@ Storage::Storage(const QString extension, const QString directoty)
     qInfo()<<"QmlStorage: loaded!";
 
     //dir.setNameFilters(QStringList()<<extension);
+}
+
+QDataStream *Storage::openDataStream(QString filename, QFile **ptrfile) const
+{
+    qInfo()<<"Storage: trying to open a data stream for " << filename << "...";
+
+    *ptrfile = new QFile(path + "/" + directoty + "/" + filename + "." + extension);
+    if(!(**ptrfile).open(QIODevice::ReadWrite))
+    {
+        qWarning() << "Storage: cant open a file";
+        return nullptr;
+    }
+    qInfo()<<"Storage: opened new filestream...";
+    return new QDataStream(&(**ptrfile)); // after usage close the file
+}
+
+void Storage::closeDataStream(QDataStream *datastream)
+{
+    qInfo()<<"Storage: trying to close a data stream...";
+    qInfo()<<"Storage: TEMP DISABLED...";
 };
 
 QVector<QString> Storage::loadFromFile(QString filename)
@@ -29,11 +49,10 @@ QVector<QString> Storage::loadFromFile(QString filename)
         qWarning() << "Storage: cant open a file";
         return result;
     }
-
     QTextStream textStream(&file);
-        while (!textStream.atEnd()) {
-            result.append(textStream.readLine());
-        }
+    while (!textStream.atEnd()) {
+        result.append(textStream.readLine());
+    }
 
     file.close();
 
@@ -50,10 +69,10 @@ bool Storage::saveToFile(QString filename, QVector<QString> data)
         qWarning() << "Storage: cant open a file";
         return false;
     }
-
     QTextStream wr(&file); //(write to file)
     for (const QString &line : data)
         wr << line << "\n";
+
     file.close();
 
     qInfo()<<"Storage: file writted succesfully";
