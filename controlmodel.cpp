@@ -148,7 +148,8 @@ void ControlModel::resetEmitter(int index, bool ifAdd, int force)
     // request sim update
 }
 
-cell* ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen) {
+cell* ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen) 
+{
     float x1 = *x, x2 = *x+vx, y1 = *y, y2 = *y+vy;
     int xb1 = round(x1), xb2 = round(x2), yb1 = round(y1), yb2 = round(y2);
     cell *c = cells[cells_system.toLinear(xb1,yb1)];
@@ -268,6 +269,7 @@ cell* ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float f
 return c;
 }
 
+
 //void brezenhamNext(int *x, int *y, float vx, float vy)
 //{
 //    bool steep = abs(vx) > abs(vy); // Проверяем рост отрезка по оси икс и по оси игрек
@@ -385,6 +387,7 @@ void ControlModel::raycastX(cell *c)
         float dst = (packet.gen >> 16) * STEP;
         // if we hit a wall
         atWall = c->wallstate & 1;
+
        // if (atWall) //TEMP!!!!
        // {
             // check reflection
@@ -645,7 +648,7 @@ bool ControlModel::parseTasks(QString taskname)
 
 QQmlListProperty<task> ControlModel::getTasks()
 {
-    //return QQmlListProperty<task>(this, &tasks);
+    return QQmlListProperty<task>(this, &tasks);
 }
 
 void ControlModel::checkCurTasks()
@@ -765,9 +768,9 @@ bool ControlModel::ldFromFile(QString filename)
 bool ControlModel::requestAdminKey()
 {
     QFile *taskfile;
-    QDataStream *datastream = storage.openDataStream("license_lic", &taskfile);
+    QDataStream *datastream = storage.openDataStream("license.lic", &taskfile);
     if (datastream == nullptr)
-        return true;
+        return false;
 
     qint16 header, control = 0xFFFF;
     while (!datastream->atEnd())

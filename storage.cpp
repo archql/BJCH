@@ -85,7 +85,7 @@ bool Storage::deleteFile(QString filename)
         return false;
 
     qInfo()<<"Storage: try delete " << filename;
-    //return file.moveToTrash();
+    return file.moveToTrash();
 }
 bool Storage::copyFile(QString filename, QString newname)
 {
