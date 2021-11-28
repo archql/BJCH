@@ -84,6 +84,7 @@ public:
     Q_INVOKABLE void checkCurTasks();
     Q_INVOKABLE QString getTaskDescr(QString taskname);
     Q_INVOKABLE void saveTaskCompletion(QString taskname);
+    Q_INVOKABLE void deleteTaskComletion(QString taskname);
 
     Q_INVOKABLE bool saveToFile(QString filename);
     Q_INVOKABLE bool ldFromFile(QString filename);

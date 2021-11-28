@@ -59,9 +59,9 @@ Window {
         }
         return result
     }
-    function qmlClearTaskCompletion()
+    function qmlClearTasksCompletion()
     {
-        for (var i = 0; i < tasks.length; i ++)
+        for (var i = 0; i < arrayOfTasks.length; i ++)
             ctrl.deleteTaskComletion(arrayOfTasks[i])
     }
 
