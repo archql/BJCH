@@ -148,95 +148,127 @@ void ControlModel::resetEmitter(int index, bool ifAdd, int force)
     // request sim update
 }
 
-void ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen) {
+cell* ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen) 
+{
     float x1 = *x, x2 = *x+vx, y1 = *y, y2 = *y+vy;
     int xb1 = round(x1), xb2 = round(x2), yb1 = round(y1), yb2 = round(y2);
-    if(!cells_system.atSystem(xb2,yb2))
-    {
-        return;
-    }
-
     cell *c = cells[cells_system.toLinear(xb1,yb1)];
     QVector <cell*> neibors = c->rneibours();
+    npacket packet;
 
-    if(xb1!=xb2 || yb2!=yb1) {
-        float k = (y1-y2)/(x2-x1);
+    if(!cells_system.atSystem(xb2,yb2))
+    {
+        return c;
+    }
+    if(cells[cells_system.toLinear(xb2,yb2)]->wallstate%2==1 && c->wallstate%2==0) {
+    if(xb1!=xb2 && yb2!=yb1) {
+      /*  float k = (y1-y2)/(x2-x1);
         float b = y1 - k*x1;
-        float xang = (float)((xb2+xb1)/2);
-        float yang = (float)((yb2+yb1)/2);
+        float xang = (float)((float)(xb2+xb1)/2);
+        float yang = (float)((float)(yb2+yb1)/2);
         float y3 = k*xang+b;
-        float x3 = (yang - b)/k;//формула исходного луча
+        float x3 = (yang - b)/k;
         //то raycast делать от координат x3 = (yang - b)/k и yang
         //силу луча брать как force*отражение от блока, куда идём
         //луч идёт вверх-вправо
-
         if(vx>0 && vy<0) {
-            if(y3>yang && c->wallstate & 0x40) { //то есть если надо идти в точку вверх
-                raycast(x3,yang,vx,-vy,force*neibors[6]->reflect,dst+STEP ,gen+1,true);
+            if(y3>yang) {
+                if((c->wallstate & 0x40)>0) { //то есть если надо идти в точку вверх
+                    raycast(xb1,yb1,vx,-vy,force*neibors[6]->reflect/100,dst+STEP ,gen+1,true);return;
+                }
             }
-            else if(y3<yang && c->wallstate & 0x2) { //то есть идём вправо
-                raycast(xang,y3,-vx,vy,force*neibors[0]->reflect,dst+STEP ,gen+1,true);
-                //если это стена, raycast по углу 180 минус наш угол
+            else {
+                if((c->wallstate & 0x2)>0) { //то есть идём вправо
+                    raycast(xb1,yb1,vx,-vy,force*neibors[0]->reflect/100,dst+STEP ,gen+1,true);return;
+                    //если это стена, raycast по углу 180 минус наш угол
+                }
             }
         }
         else if(vx>0 && vy>0) {
-            if(y3>yang && c->wallstate & 0x2) { //то есть если надо идти в точку вправо
-                raycast(xang,y3,-vx,vy,force*neibors[0]->reflect,dst+STEP ,gen+1,true);
+            if(y3<yang && (c->wallstate & 0x2)>0) { //то есть если надо идти в точку вправо
+                raycast(xb1,yb1,-vx,vy,force*neibors[0]->reflect/100,dst+STEP ,gen+1,true);return;
                 //если это стена, raycast по углу 540 минус наш угол
             }
-            else if(y3<yang && c->wallstate & 0x8) { //то есть если надо идти в точку вниз
-                raycast(x3,yang,vx,-vy,force*neibors[2]->reflect,dst+STEP ,gen+1,true);
+            else if(y3>yang && (c->wallstate & 0x8)>0) { //то есть если надо идти в точку вниз
+                raycast(xb1,yb1,vx,-vy,force*neibors[2]->reflect/100,dst+STEP ,gen+1,true);return;
                 //если это стена, raycast по углу 360 минус наш угол
             }
        }
        else if(vx<0 && vy>0) {
-            if(y3>yang && c->wallstate & 0x20) { //то есть если надо идти в точку влево
-                raycast(xang,y3,-vx,vy,force*neibors[4]->reflect,dst+STEP ,gen+1,true);
+            if(y3<yang && (c->wallstate & 0x20)>0) { //то есть если надо идти в точку влево
+                raycast(xb1,yb1,-vx,vy,force*neibors[4]->reflect/100,dst+STEP ,gen+1,true);return;
                 //если это стена, raycast по углу 360 минус наш угол
             }
-            else if(y3<yang && c->wallstate & 0x8) { //то есть если надо идти в точку вниз
-                raycast(x3,yang,vx,-vy,force*neibors[2]->reflect,dst+STEP ,gen+1,true);
+            else if(y3>yang && (c->wallstate & 0x8)>0) { //то есть если надо идти в точку вниз
+                raycast(xb1,yb1,vx,-vy,force*neibors[2]->reflect/100,dst+STEP ,gen+1,true);return;
                 //если это стена, raycast по углу 540 минус наш угол
             }
        }
        else if(vx<0 && vy<0){
-            if(y3>yang && c->wallstate & 0x40) { //то есть если надо идти в точку вверх
-                raycast(x3,yang,vx,-vy,force*neibors[6]->reflect,dst+STEP ,gen+1,true);
+            if(y3<yang && (c->wallstate & 0x40)>0) { //то есть если надо идти в точку вверх
+                raycast(xb1,yb1,vx,-vy,force*neibors[6]->reflect/100,dst+STEP ,gen+1,true);return;
                 //если это стена, raycast по углу 360 минус наш угол
             }
-            else if(y3<yang && c->wallstate & 0x20) { //то есть если надо идти в точку влево
-                raycast(xang,y3,-vx,vy,force*neibors[4]->reflect,dst+STEP ,gen+1,true);
+            else if(y3>yang && (c->wallstate & 0x20)>0) { //то есть если надо идти в точку влево
+                raycast(xb1,yb1,-vx,vy,force*neibors[4]->reflect/100,dst+STEP ,gen+1,true);return;
                 //если это стена, raycast по углу 180 минус наш угол
             }
 
         }
+        */
     }
     else
     { //если у нас нет казуса с углами и луч идёт прямо в стену
+        packet.x = (float)xb1;
+        packet.y = (float)yb1;
+        packet.gen = gen + (1 << 16) + 1;
 
         //если следующая клетка (xb2,yb2) - стена
-        if(yb2<yb1 && c->wallstate & 0x40) { //если луч вверх идёт
-            raycast(x2,(float)((yb2+yb1)/2),vx,-vy,force*neibors[6]->reflect,dst+STEP ,gen+1,true);
+        if(yb2<yb1 && (c->wallstate & 0x40)>0) { //если луч вверх идёт
+            packet.vx = vx;
+            packet.vy = -vy;
+            packet.force = force*neibors[6]->reflect/100;
+            queue.enqueue(packet);
+            //raycast(xb1,yb1,vx,-vy,force*neibors[6]->reflect/100,dst+STEP ,gen+1,true);
+            //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
+            return cells[cells_system.toLinear(xb2,yb2)];
+        }
+        else if(yb2>yb1 && (c->wallstate & 0x8)>0) { //если луч вниз идёт
+            packet.vx = vx;
+            packet.vy = -vy;
+            packet.force = force*neibors[2]->reflect/100;
+            queue.enqueue(packet);
+            //raycast(xb1,yb1,vx,-vy,force*neibors[2]->reflect/100,dst+STEP ,gen+1,true);
+            return cells[cells_system.toLinear(xb2,yb2)];
             //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
         }
-        else if(yb2>yb1 && c->wallstate & 0x8) { //если луч вниз идёт
-            raycast(x2,(float)((yb2+yb1)/2),vx,-vy,force*neibors[2]->reflect,dst+STEP ,gen+1,true);
-            //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
-        }
-        else if(xb2<xb1 && c->wallstate & 0x20) { //если луч влево идёт
-            raycast((float)((xb2+xb1)/2),y2,-vx,vy,force*neibors[4]->reflect,dst+STEP ,gen+1,true);
+        else if(xb2<xb1 && (c->wallstate & 0x20)>0) { //если луч влево идёт
+            packet.vx = -vx;
+            packet.vy = vy;
+            packet.force = force*neibors[4]->reflect/100;
+            queue.enqueue(packet);
+            //raycast(xb1,yb1,-vx,vy,force*neibors[4]->reflect/100,dst+STEP ,gen+1,true);
+            return cells[cells_system.toLinear(xb2,yb2)];
             //raycast из точки x2,y2 (пойдёт) с углом 540 минус наш угол
         }
-        else if(xb2>xb1) { //если луч вправо идёт
-            raycast((float)((xb2+xb1)/2),y2,-vx,vy,force*neibors[0]->reflect,dst+STEP ,gen+1,true);
+        else if(xb2>xb1 && (c->wallstate & 0x2)>0) { //если луч вправо идёт
+            packet.vx = -vx;
+            packet.vy = vy;
+            packet.force = force*neibors[0]->reflect/100;
+            queue.enqueue(packet);
+            //raycast(xb1,yb1,-vx,vy,force*neibors[0]->reflect/100,dst+STEP ,gen+1,true);
+            return cells[cells_system.toLinear(xb2,yb2)];
             //raycast из точки x2,y2 (пойдёт) с углом 540 минус наш угол
         }
+    }
+ }
 
     //если стена - луч, который идёт по прежнему пути, силушку его домножить на коэф пропуска
     //если не стена - продолжить луч по-мусульмански
-    }
-
+  // }
+return c;
 }
+
 
 //void brezenhamNext(int *x, int *y, float vx, float vy)
 //{
@@ -355,13 +387,14 @@ void ControlModel::raycastX(cell *c)
         float dst = (packet.gen >> 16) * STEP;
         // if we hit a wall
         atWall = c->wallstate & 1;
-        if (atWall) //TEMP!!!!
-        {
+
+       // if (atWall) //TEMP!!!!
+       // {
             // check reflection
-            CheckNeibors(&packet.x, &packet.y, packet.vx, packet.vy, packet.force, dst, packet.gen);
+            c = CheckNeibors(&packet.x, &packet.y, packet.vx, packet.vy, packet.force, dst, packet.gen);
             // absorbtion
             packet.force *= (100.f - c->absorb) / 100.f;
-        }
+       // }
         // add force to cell
         if (!c->visited.contains((packet.gen & 0xFFFF)) && (packet.gen & 0xFFFF) >= 0)
         {
@@ -518,10 +551,10 @@ void ControlModel::raycast(float x, float y, float vx, float vy, float force, fl
             break;
         cell *c = cells[c_index];
         // if we hit a wall
-        if (c->wallstate != 0) //TEMP!!!!
-        {
-            CheckNeibors(&x, &y, vx, vy, force, dst, gen);
-        }
+        //if (c->wallstate != 0) //TEMP!!!!
+        //{
+            CheckNeibors(&x, &y, vx, vy, real_force, dst, gen);
+        //}
         atWall = c->absorb != -1;
         if (atWall) // TEMP!!!!
         {

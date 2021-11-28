@@ -77,7 +77,7 @@ public:
 
     Q_PROPERTY(QQmlListProperty<task> tasks READ getTasks)
 
-    void CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen);
+    cell* CheckNeibors(float *x, float *y, float vx, float vy, float force, float dst, int gen);
 
     void reset_neibours();
     void raycast(float x,float y, float vx, float vy, float force, float dst, int gen, bool atWall);
