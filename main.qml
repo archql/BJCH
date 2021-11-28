@@ -13,10 +13,57 @@ Window {
     height: Screen.height
     visible: true
 
-    property string selectedItem: "Air"
-    property string currentTask: "task_1"
-    property bool admin_access: false
+    property int rect_width: 60
 
+    property string selectedItem: "Air"
+
+    property bool admin_access: false
+    property bool all_completed: false
+
+    property var arrayOfTasks: ["task_1", "task_2", "task_3", "task_4", "task_5"]
+    property int curTask: 0
+
+    function qmlSaveTaskResult()
+    {
+        ctrl.saveTaskCompletion(arrayOfTasks[curTask])
+    }
+    function qmlLoadTask()
+    {
+        if (curTask >= arrayOfTasks.length) // check if all completed
+        {
+            all_completed = true
+            tasktext.text = "Все задачи выполнены! Поздравляем! <br> Можете возвращаться к тесту."
+            return
+        }
+
+        myconsole.message("loading task no " + Number(curTask), "deeppink");
+        myconsole.message("task loaded? "+ ctrl.loadTask(arrayOfTasks[curTask]), "deeppink")
+        tasktext.text = ctrl.getTaskDescr(arrayOfTasks[curTask])
+    }
+    function qmlUpdateTasksView()
+    {
+        myconsole.message("checking task... ", "deeppink");
+        ctrl.checkCurTasks()
+        var tasks = ctrl.tasks
+        taskview.model = tasks.length
+
+        var result = tasks.length !== 0;
+        for (var i = 0; i < tasks.length; i ++)
+        {
+            var completed = tasks[i].completed()
+            result &= completed
+
+            myconsole.message("subtask " + Number(i) + " completed? " + completed, "deeppink");
+            taskview.itemAtIndex(i).task_text = tasks[i].getDescription()
+            taskview.itemAtIndex(i).text_color = completed ? "green" : "black"
+        }
+        return result
+    }
+    function qmlClearTaskCompletion()
+    {
+        for (var i = 0; i < tasks.length; i ++)
+            ctrl.deleteTaskComletion(arrayOfTasks[i])
+    }
 
     RadialGradient
         {
@@ -30,18 +77,19 @@ Window {
         id: ctrl
         Component.onCompleted:
         {
+            myconsole.message("ld user id? " + requestUserId(), "darkorange")
             admin_access = requestAdminKey()
-            myconsole.message("admin powers? "+ admin_access, "orange")
-            myconsole.message("task loaded? "+ ctrl.loadTask(currentTask), "pink")
-    // temp
-        }
-        onMapReady: {
-            //lview.model = ctrl
-            //repa.model = ctrl
-            //scroll.contentWidth = repa.width    // The important part
-            //scroll.contentHeight = repa.height
-            //console.log(repa.width)
+            myconsole.message("admin powers? "+ admin_access, "darkorange")
 
+            qmlClearTasksCompletion()
+
+            qmlLoadTask()
+            qmlUpdateTasksView()
+        }
+        onMapReady: { 
+            console.log("onMapReady")
+            repa.width = ctrl.getWidth() * rect_width
+            repa.height = ctrl.getHeight() * rect_width
         }
         onDataChanged:
         {
@@ -128,7 +176,7 @@ Window {
 
             Text {
                 anchors.centerIn: parent
-                text: qsTr("00:00:00")
+                text: "tasks progress: " + Number(curTask) + "/" + Number(arrayOfTasks.length)
                 font.pixelSize: parent.height / 2
             }
 
@@ -164,8 +212,6 @@ Window {
                 text: "Click me!"
                 visible: admin_access
                 onClicked: {
-                    repa.width = 21 * 60;
-                    repa.height = 13 * 60;
                     ctrl.gen(21, 13);
 
                     myconsole.message("gen with w25 h20", "gray")
@@ -260,7 +306,7 @@ Window {
                 onClicked: {
                     var filename = fedit.text
                     if (filename !== "" || filename !== "true" || filename !== "false")
-                        myconsole.message("file saved? " + ctrl.saveToFile(filename), "pink")
+                        myconsole.message("file saved? " + ctrl.saveToFile(filename), "deeppink")
                     else
                         myconsole.message("file operation error: bad filename!", "red")
                 }
@@ -271,7 +317,7 @@ Window {
                 onClicked: {
                     var filename = fedit.text
                     if (filename !== "" || filename !== "true" || filename !== "false")
-                        myconsole.message("file loaded? " + ctrl.ldFromFile(filename), "pink")
+                        myconsole.message("file loaded? " + ctrl.ldFromFile(filename), "deeppink")
                     else
                         myconsole.message("file operation error: bad filename!", "red")
                 }
@@ -289,7 +335,7 @@ Window {
                 onClicked: {
                     var filename = taskedit.text
                     if (filename !== "" || filename !== "true" || filename !== "false")
-                        myconsole.message("task created? " +ctrl.parseTasks(filename), "pink")
+                        myconsole.message("task created? " +ctrl.parseTasks(filename), "deeppink")
                 }
             }
         }
@@ -299,6 +345,11 @@ Window {
             clip: true
             contentWidth: repa.width    // The important part
             contentHeight: repa.height
+
+            onContentWidthChanged:
+            {
+                console.log("Content width ", contentWidth)
+            }
 
             Layout.columnSpan   : 5
             Layout.column       : 1
@@ -311,11 +362,20 @@ Window {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
+            ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOn
+
 
             Repeater {
                 id: repa
                 //required model
                 model: ctrl
+
+                onWidthChanged:
+                {
+                    console.log("repa width ", width)
+                }
+
 
                 delegate: Image {
                     //required start_x
@@ -325,8 +385,8 @@ Window {
 
                     property string texname: Number((model.wstate >> 1) & 0x55)
 
-                    width: 60
-                    height: 60
+                    width: rect_width
+                    height: rect_width
                     x: model.x * width
                     y: model.y * height
                     //color: model.color
@@ -352,7 +412,7 @@ Window {
                                 return
                             }
                             var ifAdd = mouse.button == Qt.LeftButton
-                            if (selectedItem == "Emitter")
+                            if (model.typeOfCell === "Emitter" || selectedItem == "Emitter")
                                 ctrl.resetEmitter(index, ifAdd, parseInt(tedit.text))
                             model.typeOfCell = ifAdd ? selectedItem : "Air"
                             myconsole.message("cell at " + Number(index) + " type changed: " + selectedItem, "gray")
@@ -431,11 +491,12 @@ Window {
                 property color text_color: "black"
                 color: "#A0A0A0A0"
                 width: parent.width
-                height: 60
+                height: 110
                 Text {
+                    x: 10
                     id: el_task_text
                     font.pixelSize: 20
-                    anchors.centerIn: parent
+                    width: parent.width
                     text: task_text
                     wrapMode: Text.WordWrap
                     color: text_color
@@ -448,6 +509,8 @@ Window {
 
             text: "restart"
 
+            enabled: !all_completed
+
             Layout.columnSpan   : 1
             Layout.column       : 0
             Layout.rowSpan      : 1
@@ -458,6 +521,8 @@ Window {
 
             Layout.fillHeight: true
             Layout.fillWidth: true
+
+            onClicked: { qmlLoadTask() ; qmlUpdateTasksView() }
         }
         Console {
             id: myconsole
@@ -478,7 +543,9 @@ Window {
         Button {
             id: b_check
 
-            text: "check"
+            property bool completed: false
+
+            text: completed ? "go to next task" : "check"
 
             Layout.columnSpan   : 2
             Layout.column       : 6
@@ -491,17 +558,22 @@ Window {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
+            enabled: !all_completed
+
             onClicked:
             {
-                ctrl.update()
-                // check conditions
-                ctrl.checkCurTasks()
-                var tasks = ctrl.tasks
-                taskview.model = tasks.length
-                for (var i = 0; i < tasks.length; i ++)
+                if (completed)
                 {
-                    taskview.itemAtIndex(i).task_text = tasks[i].getDescription()
-                    taskview.itemAtIndex(i).text_color = tasks[i].completed() ? "green" : "black"
+                    qmlSaveTaskResult()
+                    curTask ++
+                    qmlLoadTask()
+                    completed = qmlUpdateTasksView()
+                }
+                else
+                {
+                    ctrl.update()
+                    // check conditions
+                    completed = qmlUpdateTasksView()
                 }
             }
         }

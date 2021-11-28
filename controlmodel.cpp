@@ -69,7 +69,17 @@ void ControlModel::gen(int width, int height, QVector<QString> cell_types)
 //        }
 
 //    qInfo("endResetModel");
-//    endResetModel();
+    //    endResetModel();
+}
+
+int ControlModel::getWidth()
+{
+    return cells_system.getWidth();
+}
+
+int ControlModel::getHeight()
+{
+    return cells_system.getHeight();
 }
 void ControlModel::reset_neibours()
 {
@@ -121,6 +131,8 @@ int ControlModel::update()
 //         }
          raycastX(emitter);
      }
+     for (cell *c : qAsConst(cells))
+         c->updateNoiseColor();
 
     // update model
     QModelIndex bottomLeft = createIndex(cells_system.maxLinear(), 0);
@@ -361,7 +373,7 @@ void ControlModel::raycastX(cell *c)
     // add force to first cell
     float noise = c->getNoise();
     noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * c->force));
-    c->setNoise(noise);
+    c->forceSetNoise(noise);
     // set it as visited
     c->visited << 0;
 
@@ -396,12 +408,12 @@ void ControlModel::raycastX(cell *c)
             packet.force *= (100.f - c->absorb) / 100.f;
        // }
         // add force to cell
-        if (!c->visited.contains((packet.gen & 0xFFFF)) && (packet.gen & 0xFFFF) >= 0)
+        if ((!c->visited.contains((packet.gen & 0xFFFF)) || ((packet.gen & 0xFFFF) >= MIN_GEN_TO_OVERLAP)) && (packet.gen & 0xFFFF) >= MIN_GEN_SHOW)
         {
             float noise = c->getNoise();
             float real_force = packet.force - 6*log2f(dst) - 11.f;
             noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * real_force));//sqrt((c->noise * c->noise) + (force*force));//+= force;
-            c->setNoise(noise);
+            c->forceSetNoise(noise);
             c->visited << (packet.gen & 0xFFFF);
         }
         // mov point
@@ -604,6 +616,8 @@ bool ControlModel::loadTask(QString taskname)
         *datastream >> id >> tgt >> arg;
         tasks.append(new task(id, tgt, arg));
     }
+    taskfile->flush();
+    taskfile->close();
     return ldFromFile(taskname + "_lvl");
 }
 
@@ -653,11 +667,36 @@ QQmlListProperty<task> ControlModel::getTasks()
 
 void ControlModel::checkCurTasks()
 {
-    for (task *t : tasks)
+    for (task *t : qAsConst(tasks))
         t->reset();
-    for (cell* c : cells)
+    for (cell* c : qAsConst(cells))
         for (task *t : tasks)
             t->check(c);
+}
+
+QString ControlModel::getTaskDescr(QString taskname)
+{
+    QVector<QString> data = storage.loadFromFile(taskname + "_descr");
+    return data.toList().join("<br>");
+}
+
+void ControlModel::saveTaskCompletion(QString taskname)
+{
+    QFile *taskfile;
+    QDataStream *datastream = storage.openDataStream(taskname + "_res", &taskfile);
+    if (datastream == nullptr)
+        return;
+    qint64 hash = TASK_TYPES[taskname] ^ user_id;
+    *datastream << hash;
+
+    taskfile->flush();
+    taskfile->close();
+}
+
+void ControlModel::deleteTaskComletion(QString taskname)
+{
+    // del old completion file
+    storage.deleteFile(taskname + "_res");
 }
 
 bool ControlModel::saveToFile(QString filename)
@@ -712,7 +751,6 @@ bool ControlModel::ldFromFile(QString filename)
 
     // ld cell data
     cells_system.set(width, height);
-    emit ControlModel::mapReady(); // temp here to update view
 
     qInfo("beginResetModel");
     beginResetModel();
@@ -749,6 +787,7 @@ bool ControlModel::ldFromFile(QString filename)
 
     qInfo("endResetModel");
     endResetModel();
+    emit ControlModel::mapReady(); // temp here to update view
 
     curfile->close();
     return result;
@@ -778,7 +817,25 @@ bool ControlModel::requestAdminKey()
         *datastream >> header;
         control ^= header;
     }
-    return !(control ^ 0x7B33);
+
+    taskfile->flush();
+    taskfile->close();
+    return !(control ^ 0x7B33) && (datastream->status() == QDataStream::Ok);
+}
+
+bool ControlModel::requestUserId()
+{
+    user_id = 0x0;
+    QFile *taskfile;
+    QDataStream *datastream = storage.openDataStream("userfile.user", &taskfile);
+    if (datastream == nullptr)
+        return false;
+
+    *datastream >> user_id;
+
+    taskfile->flush();
+    taskfile->close();
+    return datastream->status() == QDataStream::Ok;
 }
 
 //========================================================
