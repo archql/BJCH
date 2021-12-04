@@ -54,7 +54,7 @@ public:
     Q_PROPERTY(int reflect MEMBER reflect)
     Q_PROPERTY(int wstate MEMBER wallstate)
     Q_PROPERTY(int locked MEMBER locked)
-    QColor getNoiseColor();
+    void updateNoiseColor();
 
 private:
     QVector<cell *> Neibours;

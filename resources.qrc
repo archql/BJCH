@@ -3,38 +3,12 @@
         <file>main.qml</file>
         <file>sources/textures/floor_0.jpg</file>
         <file>sources/textures/floor_1.jpg</file>
-        <file>sources/textures/floor_10.jpg</file>
-        <file>sources/textures/floor_11.jpg</file>
-        <file>sources/textures/floor_12.jpg</file>
-        <file>sources/textures/floor_13.jpg</file>
-        <file>sources/textures/floor_14.jpg</file>
-        <file>sources/textures/floor_15.jpg</file>
         <file>sources/textures/floor_16.jpg</file>
         <file>sources/textures/floor_17.jpg</file>
-        <file>sources/textures/floor_18.jpg</file>
-        <file>sources/textures/floor_19.jpg</file>
-        <file>sources/textures/floor_2.jpg</file>
         <file>sources/textures/floor_20.jpg</file>
         <file>sources/textures/floor_21.jpg</file>
-        <file>sources/textures/floor_22.jpg</file>
-        <file>sources/textures/floor_23.jpg</file>
-        <file>sources/textures/floor_24.jpg</file>
-        <file>sources/textures/floor_25.jpg</file>
-        <file>sources/textures/floor_26.jpg</file>
-        <file>sources/textures/floor_27.jpg</file>
-        <file>sources/textures/floor_28.jpg</file>
-        <file>sources/textures/floor_29.jpg</file>
-        <file>sources/textures/floor_3.jpg</file>
-        <file>sources/textures/floor_30.jpg</file>
-        <file>sources/textures/floor_31.jpg</file>
-        <file>sources/textures/floor_32.jpg</file>
         <file>sources/textures/floor_4.jpg</file>
         <file>sources/textures/floor_5.jpg</file>
-        <file>sources/textures/floor_510.jpg</file>
-        <file>sources/textures/floor_6.jpg</file>
-        <file>sources/textures/floor_7.jpg</file>
-        <file>sources/textures/floor_8.jpg</file>
-        <file>sources/textures/floor_9.jpg</file>
         <file>sources/textures/floor_tex.psd</file>
         <file>sources/textures/tex_Emitter.png</file>
         <file>sources/textures/tex_Wall1.jpg</file>
@@ -53,5 +27,10 @@
         <file>sources/textures/tex_Wall4.png</file>
         <file>Console.qml</file>
         <file>sources/textures/lock.png</file>
+        <file>sources/textures/tex_Air.png</file>
+        <file>sources/anim/exp_gif_1.gif</file>
+        <file>sources/textures/question.png</file>
+        <file>sources/anim/exp_gif_2.gif</file>
+        <file>sources/anim/exp_gif_3.gif</file>
     </qresource>
 </RCC>

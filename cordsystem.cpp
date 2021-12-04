@@ -39,6 +39,16 @@ void CordSystem::get(int &min_x,int &min_y,int &max_x,int &max_y)
     min_y=this->min_y;
 }
 
+int CordSystem::getWidth()
+{
+    return max_x - min_x;
+}
+
+int CordSystem::getHeight()
+{
+    return max_y - min_y;
+}
+
 int CordSystem::maxLinear(){
     return(max_x-min_x)*(max_y-min_y);
 }

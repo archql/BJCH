@@ -18,7 +18,7 @@ cell::cell(int x, int y, int index, QObject *parent) : QObject(parent)
     this->index = index;
     noise = 0.f;
     setType("Air");
-    color = getNoiseColor();
+    updateNoiseColor();
 }
 
 cell::cell(int x, int y, int index, QString cellType, bool locked, QObject *parent) : QObject(parent)
@@ -33,7 +33,7 @@ cell::cell(int x, int y, int index, QString cellType, bool locked, QObject *pare
     this->index = index;
     noise = 0.f;
     setType(cellType);
-    color = getNoiseColor();
+    updateNoiseColor();
 }
 
 cell::~cell()
@@ -43,10 +43,8 @@ cell::~cell()
 
 void cell::setNoise(const float noise)
 {
-    qInfo() << "setNoise " << noise;
     this->noise = noise;
-    color = getNoiseColor();
-    qInfo() << "color " << color;
+    updateNoiseColor();
 }
 
 void cell::forceSetNoise(const float noise)
@@ -60,16 +58,16 @@ void cell::setType(const QString cellType)
     // do some processing
     // IF NEW ELEMENT IS EMITTER YOU NEED TO CALL RESET EMITTER FROM MODEL!
     if (typeOfCell == "Wall1") {
-        absorb = 10;
-        reflect = 90;
+        absorb = 5;
+        reflect = 95;
     } else if (typeOfCell == "Wall2") {
-        absorb = 20;
-        reflect = 80;
+        absorb = 15;
+        reflect = 20;
     } else if (typeOfCell == "Wall3") {
-        absorb = 30;
-        reflect = 100; //90
+        absorb = 25;
+        reflect = 80;
     } else if (typeOfCell == "Wall4") {
-        absorb = 60;
+        absorb = 40;
         reflect = 100; //90
     } else {
         absorb = -1;
@@ -82,13 +80,12 @@ void cell::setType(const QString cellType)
         for (cell *c : Neibours)
         {
             if (c != nullptr)
-                c->checkWallstate((i + 4) % 8); // do it not for all -- only for changed
+                c->checkWallstate((i + 4) % 8);
             i++;
         }
         wallstate ^= 1;
     }
     // temporaly
-    qInfo() << "Wallstate check!";
     auto model = dynamic_cast<ControlModel*>(parent());
     if (model)
     {
@@ -133,7 +130,7 @@ void cell::setNeibours(cell *p0, cell *p1, cell *p2, cell *p3, cell *p4, cell *p
 }
 
 // static
-QColor cell::getNoiseColor()
+void cell::updateNoiseColor()
 {
     //if(typeOfCell == "Wall1") return QColor("lightGray");
     //if(typeOfCell == "Wall2") return QColor("darkGray");
@@ -141,27 +138,27 @@ QColor cell::getNoiseColor()
     //if(typeOfCell == "Wall4") return QColor("gray");
     //if(typeOfCell == "Emitter") return QColor("black");
     if(noise <= 5)
-        return QColor("skyblue");
+        color = QColor("skyblue");
     else if(noise <=10)
-        return QColor("mediumaquamarine");
+        color =  QColor("mediumaquamarine");
     else if(noise <=20)
-        return QColor("mediumseagreen");
+        color =  QColor("mediumseagreen");
     else if(noise <=40)
-        return QColor("lightgreen");
+        color =  QColor("lightgreen");
     else if(noise <=60)
-        return QColor("khaki");
+        color =  QColor("khaki");
     else if(noise <=80)
-        return QColor("orange");
+        color =  QColor("orange");
     else if(noise <=110)
-        return QColor("darkorange");
+        color =  QColor("darkorange");
     else if(noise <=130)
-        return QColor("lightcoral");
+        color =  QColor("lightcoral");
     else if(noise <=150)
-        return QColor("palevioletred");
+        color =  QColor("palevioletred");
     else if(noise <=170)
-        return QColor("indianred");
+        color =  QColor("indianred");
     else if(noise <=190)
-        return QColor("firebrick");
+        color =  QColor("firebrick");
     else
-        return QColor("maroon");
+        color =  QColor("maroon");
 }

@@ -69,7 +69,17 @@ void ControlModel::gen(int width, int height, QVector<QString> cell_types)
 //        }
 
 //    qInfo("endResetModel");
-//    endResetModel();
+    //    endResetModel();
+}
+
+int ControlModel::getWidth()
+{
+    return cells_system.getWidth();
+}
+
+int ControlModel::getHeight()
+{
+    return cells_system.getHeight();
 }
 void ControlModel::reset_neibours()
 {
@@ -121,6 +131,8 @@ int ControlModel::update()
 //         }
          raycastX(emitter);
      }
+     for (cell *c : qAsConst(cells))
+         c->updateNoiseColor();
 
     // update model
     QModelIndex bottomLeft = createIndex(cells_system.maxLinear(), 0);
@@ -160,7 +172,7 @@ cell* ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float f
     {
         return c;
     }
-    if(cells[cells_system.toLinear(xb2,yb2)]->wallstate%2==1 && c->wallstate%2==0) {
+    if((cells[cells_system.toLinear(xb2,yb2)]->wallstate & 1) && !(c->wallstate & 1)) {
     if(xb1!=xb2 && yb2!=yb1) {
       /*  float k = (y1-y2)/(x2-x1);
         float b = y1 - k*x1;
@@ -224,40 +236,40 @@ cell* ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float f
         packet.gen = gen + (1 << 16) + 1;
 
         //если следующая клетка (xb2,yb2) - стена
-        if(yb2<yb1 && (c->wallstate & 0x40)>0) { //если луч вверх идёт
+        if((yb2<yb1) && (c->wallstate & 0x80)) { //если луч вверх идёт
             packet.vx = vx;
             packet.vy = -vy;
             packet.force = force*neibors[6]->reflect/100;
             queue.enqueue(packet);
             //raycast(xb1,yb1,vx,-vy,force*neibors[6]->reflect/100,dst+STEP ,gen+1,true);
             //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
-            return cells[cells_system.toLinear(xb2,yb2)];
+            return c;
         }
-        else if(yb2>yb1 && (c->wallstate & 0x8)>0) { //если луч вниз идёт
+        if((yb2>yb1) && (c->wallstate & 0x8)) { //если луч вниз идёт
             packet.vx = vx;
             packet.vy = -vy;
             packet.force = force*neibors[2]->reflect/100;
             queue.enqueue(packet);
             //raycast(xb1,yb1,vx,-vy,force*neibors[2]->reflect/100,dst+STEP ,gen+1,true);
-            return cells[cells_system.toLinear(xb2,yb2)];
+            return c;
             //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
         }
-        else if(xb2<xb1 && (c->wallstate & 0x20)>0) { //если луч влево идёт
+        if((xb2<xb1) && (c->wallstate & 0x20)) { //если луч влево идёт
             packet.vx = -vx;
             packet.vy = vy;
             packet.force = force*neibors[4]->reflect/100;
             queue.enqueue(packet);
             //raycast(xb1,yb1,-vx,vy,force*neibors[4]->reflect/100,dst+STEP ,gen+1,true);
-            return cells[cells_system.toLinear(xb2,yb2)];
+            return c;
             //raycast из точки x2,y2 (пойдёт) с углом 540 минус наш угол
         }
-        else if(xb2>xb1 && (c->wallstate & 0x2)>0) { //если луч вправо идёт
+        if((xb2>xb1) && (c->wallstate & 0x2)) { //если луч вправо идёт
             packet.vx = -vx;
             packet.vy = vy;
             packet.force = force*neibors[0]->reflect/100;
             queue.enqueue(packet);
             //raycast(xb1,yb1,-vx,vy,force*neibors[0]->reflect/100,dst+STEP ,gen+1,true);
-            return cells[cells_system.toLinear(xb2,yb2)];
+            return c;
             //raycast из точки x2,y2 (пойдёт) с углом 540 минус наш угол
         }
     }
@@ -361,7 +373,7 @@ void ControlModel::raycastX(cell *c)
     // add force to first cell
     float noise = c->getNoise();
     noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * c->force));
-    c->setNoise(noise);
+    c->forceSetNoise(noise);
     // set it as visited
     c->visited << 0;
 
@@ -396,12 +408,12 @@ void ControlModel::raycastX(cell *c)
             packet.force *= (100.f - c->absorb) / 100.f;
        // }
         // add force to cell
-        if (!c->visited.contains((packet.gen & 0xFFFF)) && (packet.gen & 0xFFFF) >= 0)
+        if ((!c->visited.contains((packet.gen & 0xFFFF)) || ((packet.gen & 0xFFFF) >= MIN_GEN_TO_OVERLAP)) && (packet.gen & 0xFFFF) >= MIN_GEN_SHOW)
         {
             float noise = c->getNoise();
             float real_force = packet.force - 6*log2f(dst) - 11.f;
             noise = 10 * log10f(powf(10, 0.1f * noise) + powf(10, 0.1f * real_force));//sqrt((c->noise * c->noise) + (force*force));//+= force;
-            c->setNoise(noise);
+            c->forceSetNoise(noise);
             c->visited << (packet.gen & 0xFFFF);
         }
         // mov point
@@ -604,6 +616,8 @@ bool ControlModel::loadTask(QString taskname)
         *datastream >> id >> tgt >> arg;
         tasks.append(new task(id, tgt, arg));
     }
+    taskfile->flush();
+    taskfile->close();
     return ldFromFile(taskname + "_lvl");
 }
 
@@ -648,16 +662,41 @@ bool ControlModel::parseTasks(QString taskname)
 
 QQmlListProperty<task> ControlModel::getTasks()
 {
-    return QQmlListProperty<task>(this, &tasks);
+    return QQmlListProperty<task>();//<task>(this, &tasks);
 }
 
 void ControlModel::checkCurTasks()
 {
-    for (task *t : tasks)
+    for (task *t : qAsConst(tasks))
         t->reset();
-    for (cell* c : cells)
+    for (cell* c : qAsConst(cells))
         for (task *t : tasks)
             t->check(c);
+}
+
+QString ControlModel::getTaskDescr(QString taskname)
+{
+    QVector<QString> data = storage.loadFromFile(taskname + "_descr");
+    return data.toList().join("<br>");
+}
+
+void ControlModel::saveTaskCompletion(QString taskname)
+{
+    QFile *taskfile;
+    QDataStream *datastream = storage.openDataStream(taskname + "_res", &taskfile);
+    if (datastream == nullptr)
+        return;
+    qint64 hash = TASK_TYPES[taskname] ^ user_id;
+    *datastream << hash;
+
+    taskfile->flush();
+    taskfile->close();
+}
+
+void ControlModel::deleteTaskComletion(QString taskname)
+{
+    // del old completion file
+    storage.deleteFile(taskname + "_res");
 }
 
 bool ControlModel::saveToFile(QString filename)
@@ -712,7 +751,6 @@ bool ControlModel::ldFromFile(QString filename)
 
     // ld cell data
     cells_system.set(width, height);
-    emit ControlModel::mapReady(); // temp here to update view
 
     qInfo("beginResetModel");
     beginResetModel();
@@ -749,6 +787,7 @@ bool ControlModel::ldFromFile(QString filename)
 
     qInfo("endResetModel");
     endResetModel();
+    emit ControlModel::mapReady(); // temp here to update view
 
     curfile->close();
     return result;
@@ -778,7 +817,25 @@ bool ControlModel::requestAdminKey()
         *datastream >> header;
         control ^= header;
     }
-    return !(control ^ 0x7B33);
+
+    taskfile->flush();
+    taskfile->close();
+    return !(control ^ 0x7B33) && (datastream->status() == QDataStream::Ok);
+}
+
+bool ControlModel::requestUserId()
+{
+    user_id = 0x0;
+    QFile *taskfile;
+    QDataStream *datastream = storage.openDataStream("userfile.user", &taskfile);
+    if (datastream == nullptr)
+        return false;
+
+    *datastream >> user_id;
+
+    taskfile->flush();
+    taskfile->close();
+    return datastream->status() == QDataStream::Ok;
 }
 
 //========================================================
