@@ -19,6 +19,9 @@ public:
     void get(int &max_x,int &max_y);
     void get(int &min_x,int &min_y,int &max_x,int &max_y);
 
+    int getWidth();
+    int getHeight();
+
     void toSystem(double &x, double &y);//ret coords In SYSTEM! (nonrelative to min)
     void toSystem(int &x, int &y);//ret coords In SYSTEM! (nonrelative to min)
     void toSystem(QPointF &p);//ret coords In SYSTEM! (nonrelative to min)
