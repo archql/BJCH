@@ -172,7 +172,7 @@ cell* ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float f
     {
         return c;
     }
-    if(cells[cells_system.toLinear(xb2,yb2)]->wallstate%2==1 && c->wallstate%2==0) {
+    if((cells[cells_system.toLinear(xb2,yb2)]->wallstate & 1) && !(c->wallstate & 1)) {
     if(xb1!=xb2 && yb2!=yb1) {
       /*  float k = (y1-y2)/(x2-x1);
         float b = y1 - k*x1;
@@ -236,40 +236,40 @@ cell* ControlModel::CheckNeibors(float *x, float *y, float vx, float vy, float f
         packet.gen = gen + (1 << 16) + 1;
 
         //если следующая клетка (xb2,yb2) - стена
-        if(yb2<yb1 && (c->wallstate & 0x40)>0) { //если луч вверх идёт
+        if((yb2<yb1) && (c->wallstate & 0x80)) { //если луч вверх идёт
             packet.vx = vx;
             packet.vy = -vy;
             packet.force = force*neibors[6]->reflect/100;
             queue.enqueue(packet);
             //raycast(xb1,yb1,vx,-vy,force*neibors[6]->reflect/100,dst+STEP ,gen+1,true);
             //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
-            return cells[cells_system.toLinear(xb2,yb2)];
+            return c;
         }
-        else if(yb2>yb1 && (c->wallstate & 0x8)>0) { //если луч вниз идёт
+        if((yb2>yb1) && (c->wallstate & 0x8)) { //если луч вниз идёт
             packet.vx = vx;
             packet.vy = -vy;
             packet.force = force*neibors[2]->reflect/100;
             queue.enqueue(packet);
             //raycast(xb1,yb1,vx,-vy,force*neibors[2]->reflect/100,dst+STEP ,gen+1,true);
-            return cells[cells_system.toLinear(xb2,yb2)];
+            return c;
             //raycast из точки x2,y2 (пойдёт) с углом 360 минус наш угол
         }
-        else if(xb2<xb1 && (c->wallstate & 0x20)>0) { //если луч влево идёт
+        if((xb2<xb1) && (c->wallstate & 0x20)) { //если луч влево идёт
             packet.vx = -vx;
             packet.vy = vy;
             packet.force = force*neibors[4]->reflect/100;
             queue.enqueue(packet);
             //raycast(xb1,yb1,-vx,vy,force*neibors[4]->reflect/100,dst+STEP ,gen+1,true);
-            return cells[cells_system.toLinear(xb2,yb2)];
+            return c;
             //raycast из точки x2,y2 (пойдёт) с углом 540 минус наш угол
         }
-        else if(xb2>xb1 && (c->wallstate & 0x2)>0) { //если луч вправо идёт
+        if((xb2>xb1) && (c->wallstate & 0x2)) { //если луч вправо идёт
             packet.vx = -vx;
             packet.vy = vy;
             packet.force = force*neibors[0]->reflect/100;
             queue.enqueue(packet);
             //raycast(xb1,yb1,-vx,vy,force*neibors[0]->reflect/100,dst+STEP ,gen+1,true);
-            return cells[cells_system.toLinear(xb2,yb2)];
+            return c;
             //raycast из точки x2,y2 (пойдёт) с углом 540 минус наш угол
         }
     }

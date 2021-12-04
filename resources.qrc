@@ -28,5 +28,9 @@
         <file>Console.qml</file>
         <file>sources/textures/lock.png</file>
         <file>sources/textures/tex_Air.png</file>
+        <file>sources/anim/exp_gif_1.gif</file>
+        <file>sources/textures/question.png</file>
+        <file>sources/anim/exp_gif_2.gif</file>
+        <file>sources/anim/exp_gif_3.gif</file>
     </qresource>
 </RCC>

@@ -58,17 +58,17 @@ void cell::setType(const QString cellType)
     // do some processing
     // IF NEW ELEMENT IS EMITTER YOU NEED TO CALL RESET EMITTER FROM MODEL!
     if (typeOfCell == "Wall1") {
-        absorb = 10;
-        reflect = 90;
+        absorb = 5;
+        reflect = 95;
     } else if (typeOfCell == "Wall2") {
-        absorb = 20;
-        reflect = 40;
+        absorb = 15;
+        reflect = 20;
     } else if (typeOfCell == "Wall3") {
-        absorb = 30;
-        reflect = 80; //90
+        absorb = 25;
+        reflect = 80;
     } else if (typeOfCell == "Wall4") {
-        absorb = 60;
-        reflect = 95; //90
+        absorb = 40;
+        reflect = 100; //90
     } else {
         absorb = -1;
         reflect = -1;

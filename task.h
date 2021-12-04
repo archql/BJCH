@@ -49,8 +49,9 @@ static bool _task_9_hlp(cell *c, qint32 ctr, qint32 argument)
         _visited[c] = ctr;
     if (ctr >= argument)
         return false;
-    for (cell *n : c->rneibours())
+    for (int i = 0; i < 8; i+= 2)
     {
+        cell *n = c->rneibours()[i];
         if (n == nullptr)
             continue;
         if (n->getType() == "Workplace")
@@ -98,20 +99,34 @@ const static QHash<qint8, bool(*)(qint32, qint32)> IFCOMPLETED_FUNCTION =
 {0x01, _ifcompleted_2},
 {0x02, _ifcompleted_3}};
 
+//const static QHash<qint8, QString> ID_DESCRIPTION_A =
+//{{0x00, "workplaces has noise level less than"},
+//{0x10, "use workplaces"},
+//{0x20, "use walls type 1"},
+//{0x30, "use walls type 2"},
+//{0x40, "use walls type 3"},
+//{0x50, "use walls type 4"},
+//{0x60, "free space"},
+//{0x70, "workplace has no neiboring workspaces"},
+//{0x80, "there is at least 1 path from emitter to workspace with length"}};
+//const static QHash<qint8, QString> ID_DESCRIPTION_B =
+//{{0x00, "(exactly)"},
+//{0x01, "(or more)"},
+//{0x02, "(or less)"}};
 const static QHash<qint8, QString> ID_DESCRIPTION_A =
-{{0x00, "workplaces has noise level less than"},
-{0x10, "use workplaces"},
-{0x20, "use walls type 1"},
-{0x30, "use walls type 2"},
-{0x40, "use walls type 3"},
-{0x50, "use walls type 4"},
-{0x60, "free space"},
-{0x70, "workplace has no neiboring workspaces"},
-{0x80, "there is at least 1 path from emitter to workspace with length"}};
+{{0x00, "на рабочих местах уровень шума меньше чем"},
+{0x10, "расположить рабочих мест"},
+{0x20, "расположить стеклянных панелей"},
+{0x30, "расположить пористых блоков"},
+{0x40, "расположить деревянных блоков"},
+{0x50, "расположить бетонных блоков"},
+{0x60, "свободного места"},
+{0x70, "рядом с рабочим местом нет другого рабочего места"},
+{0x80, "от источника шума есть проход хотябы к одному рабочему месту длиной не более"}};
 const static QHash<qint8, QString> ID_DESCRIPTION_B =
-{{0x00, "(exactly)"},
-{0x01, "(or more)"},
-{0x02, "(or less)"}};
+{{0x00, "(точно)"},
+{0x01, "(или более)"},
+{0x02, "(или менее)"}};
 
 class task : public QObject
 {

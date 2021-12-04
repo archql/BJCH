@@ -30,7 +30,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
     Console.qml \
-    main.qml
+    main.qml \
+    sources/anim/exp_gif_2.gif \
+    sources/anim/exp_gif_3.gif
 
 RESOURCES += \
     resources.qrc
