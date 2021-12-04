@@ -22,7 +22,7 @@ ApplicationWindow  {
     property bool admin_access: false
     property bool all_completed: false
     property bool help_enabled: true
-
+    
     property var arrayOfTasks: ["task_1", "task_2", "task_3"]
     property int curTask: 0
 
@@ -88,6 +88,7 @@ ApplicationWindow  {
             myconsole.message("admin powers? "+ admin_access, "darkorange")
 
             qmlClearTasksCompletion()
+
 
             qmlLoadTask()
             qmlUpdateTasksView()
@@ -714,11 +715,12 @@ ApplicationWindow  {
                     RowLayout {
                         width: parent.width
                         spacing: 30
+
                         Text { text: index==0 ? "Для того, чтобы установить преграду/стену на рабочее\nполе, нажмите Левую кнопку мыши! Для удаления стены\nиз рабочего поля нажмите Правой кнопкой мыши на стену!    ": index==1 ? "После установки стены уровень шума не обновится.\nДля обновления уровня шума в рабочей зоне нажмите кнопку\nПроверить решение!": index==2 ? "Чтобы узнать показатели прибора Экофизика 110А в Дб,\nиспользуйте верхний переключатель.\nЧтобы посмотреть заблокированные для изменения клетки,    \nиспользуйте нижний переключатель.": "" ;
                         font.pixelSize: font_size;
 
                         }
-                        AnimatedImage
+   AnimatedImage
                         {
                             id: animation;
                             cache: true;
