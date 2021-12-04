@@ -22,7 +22,7 @@ ApplicationWindow  {
     property bool admin_access: false
     property bool all_completed: false
     property bool help_enabled: true
-
+    
     property var arrayOfTasks: ["task_1", "task_2", "task_3"]
     property int curTask: 0
 
@@ -88,6 +88,7 @@ ApplicationWindow  {
             myconsole.message("admin powers? "+ admin_access, "darkorange")
 
             qmlClearTasksCompletion()
+
 
             qmlLoadTask()
             qmlUpdateTasksView()

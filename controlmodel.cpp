@@ -662,7 +662,7 @@ bool ControlModel::parseTasks(QString taskname)
 
 QQmlListProperty<task> ControlModel::getTasks()
 {
-    return QQmlListProperty<task>(this, &tasks);
+    return QQmlListProperty<task>();//<task>(this, &tasks);
 }
 
 void ControlModel::checkCurTasks()
