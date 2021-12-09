@@ -32,5 +32,7 @@
         <file>sources/textures/question.png</file>
         <file>sources/anim/exp_gif_2.gif</file>
         <file>sources/anim/exp_gif_3.gif</file>
+        <file>sources/anim/exp_gif_4.gif</file>
+        <file>sources/anim/exp_gif_5.gif</file>
     </qresource>
 </RCC>
